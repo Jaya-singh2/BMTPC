@@ -1,5 +1,0 @@
-node_modules/
-ios/Pods/
-android/build/
-android/.gradle/
-.env
