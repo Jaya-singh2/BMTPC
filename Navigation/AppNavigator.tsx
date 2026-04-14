@@ -1,16 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
+  TouchableOpacity,
+  Alert,
 } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import {
-  createDrawerNavigator,
-  DrawerContentScrollView,
-  DrawerItem,
-} from "@react-navigation/drawer";
+import { createDrawerNavigator } from "@react-navigation/drawer";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
 import HomeScreen from "../screens/HomeScreen";
@@ -18,96 +16,160 @@ import EarthquakeHazardScreen from "../screens/EarthquakeHazardScreen";
 import StateDetailScreen from "../screens/StateDetailScreen";
 import PdfViewerScreen from "../screens/PdfViewerScreen";
 import ContentScreen from "../screens/ContentScreen";
+import VulnerabilityRiskScreen from "../screens/VulnerabilityRiskScreen";
+import FeedbackScreen from "../screens/FeedbackScreen";
 
-/* ---------------- TYPES ---------------- */
+/* ---------------- STACK ---------------- */
 
-type StackParamList = {
-  Home: undefined;
-  HazardMap: undefined;
-  StateDetail: undefined;
-};
-
-const Stack = createNativeStackNavigator<StackParamList>();
+const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
-
-/* ---------------- STACK (NO HEADER) ---------------- */
 
 function MainStack() {
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false, // ✅ disable stack header
-      }}
-    >
-      <Stack.Screen name="Home" component={HomeScreen} />
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="HomeMain" component={HomeScreen} />
       <Stack.Screen name="EarthquakeHazardScreen" component={EarthquakeHazardScreen} />
       <Stack.Screen name="StateDetail" component={StateDetailScreen} />
-      <Stack.Screen name="PdfViewerScreen" component={PdfViewerScreen}/>
-      <Stack.Screen name="ContentScreen" component={ContentScreen}/>
+      <Stack.Screen name="PdfViewerScreen" component={PdfViewerScreen} />
+      <Stack.Screen name="ContentScreen" component={ContentScreen} />
+      <Stack.Screen name="VulnerabilityRiskScreen" component={VulnerabilityRiskScreen} />
+      <Stack.Screen name="FeedbackScreen" component={FeedbackScreen} />
     </Stack.Navigator>
   );
 }
 
-/* ---------------- CUSTOM DRAWER ---------------- */
+/* ---------------- TYPES ---------------- */
 
-function CustomDrawerContent(props: any) {
+type MenuButtonProps = {
+  label: string;
+  icon: string;
+  onPress: () => void;
+  showArrow?: boolean;
+  isOpen?: boolean;
+  active?: boolean;
+};
+
+/* ---------------- MENU BUTTON ---------------- */
+
+const MenuButton: React.FC<MenuButtonProps> = ({
+  label,
+  icon,
+  onPress,
+  showArrow = false,
+  isOpen = false,
+  active = false,
+}) => {
   return (
-    <DrawerContentScrollView
-      {...props}
-      contentContainerStyle={styles.drawer}
+    <TouchableOpacity
+      style={[styles.menuBtn, active && styles.activeMenuBtn]}
+      onPress={onPress}
     >
-      <View style={styles.drawerHeader}>
-        <Ionicons
-          name="shield-checkmark"
-          size={36}
-          color="#4f6f3a"
-        />
-        <Text style={styles.drawerTitle}>
-          Vulnerability Atlas
-        </Text>
+      <View style={styles.menuLeft}>
+        <Ionicons name={icon} size={20} color="#222" />
+        <Text style={styles.menuText}>{label}</Text>
       </View>
 
-      <DrawerItem
-        label="Home"
-        icon={({ color, size }) => (
-          <Ionicons name="home-outline" size={size} color={color} />
-        )}
-        onPress={() => {
-          props.navigation.navigate("Home");
-          props.navigation.closeDrawer();
-        }}
-      />
+      {showArrow && (
+        <Ionicons
+          name={isOpen ? "chevron-up-outline" : "chevron-down-outline"}
+          size={20}
+          color="#222"
+        />
+      )}
+    </TouchableOpacity>
+  );
+};
 
-      <DrawerItem
-        label="About"
-        icon={({ color, size }) => (
-          <Ionicons
-            name="information-circle-outline"
-            size={size}
-            color={color}
-          />
-        )}
-        onPress={() => {
-          props.navigation.navigate("About");
-          props.navigation.closeDrawer();
-        }}
-      />
+/* ---------------- DRAWER ---------------- */
 
-      <DrawerItem
-        label="Feedback"
-        icon={({ color, size }) => (
-          <Ionicons
-            name="chatbubble-ellipses-outline"
-            size={size}
-            color={color}
-          />
+function CustomDrawerContent(props: any) {
+  const { navigation } = props;
+
+  const [homeOpen, setHomeOpen] = useState(false);
+  const [activeItem, setActiveItem] = useState("Home");
+
+  return (
+    <View style={styles.drawerContainer}>
+      {/* HEADER */}
+      <View style={styles.drawerHeader}>
+        <Text style={styles.drawerHeaderTitle}>Menu</Text>
+
+        <TouchableOpacity onPress={() => navigation.closeDrawer()}>
+          <Ionicons name="close-outline" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      {/* BODY */}
+      <View style={styles.drawerBody}>
+        {/* HOME (TOGGLE) */}
+        <MenuButton
+          label="Home"
+          icon="home-outline"
+          showArrow
+          isOpen={homeOpen}
+          active={activeItem === "Home"}
+          onPress={() => {
+            setHomeOpen(!homeOpen);
+            setActiveItem("Home");
+          }}
+        />
+
+        {/* SUB MENU */}
+        {homeOpen && (
+          <View style={{ marginLeft: 10 }}>
+            <MenuButton
+              label="Hazards"
+              icon="warning-outline"
+              active={activeItem === "Hazards"}
+              onPress={() => {
+                setActiveItem("Hazards");
+
+                navigation.navigate("Home", {
+                  screen: "HomeMain",
+                  params: { tab: "hazards" },
+                });
+              }}
+            />
+
+            <MenuButton
+              label="About Us"
+              icon="document-text-outline"
+              active={activeItem === "About"}
+              onPress={() => {
+                setActiveItem("About");
+
+                navigation.navigate("Home", {
+                  screen: "HomeMain",
+                  params: { tab: "about" },
+                });
+              }}
+            />
+          </View>
         )}
-        onPress={() => {
-          props.navigation.navigate("Feedback");
-          props.navigation.closeDrawer();
-        }}
-      />
-    </DrawerContentScrollView>
+
+        {/* SHARE */}
+        <MenuButton
+          label="Share"
+          icon="share-social-outline"
+          active={activeItem === "Share"}
+          onPress={() => {
+            setActiveItem("Share");
+            Alert.alert("Share", "Share functionality not added yet.");
+          }}
+        />
+
+        {/* EXIT */}
+        <MenuButton
+          label="Exit"
+          icon="log-out-outline"
+          active={activeItem === "Exit"}
+          onPress={() => {
+            setActiveItem("Exit");
+            Alert.alert("Exit", "Exit functionality not added yet.");
+          }}
+        />
+      </View>
+    </View>
   );
 }
 
@@ -118,71 +180,80 @@ export default function AppNavigator() {
     <NavigationContainer>
       <Drawer.Navigator
         drawerPosition="right"
+        drawerContent={(props) => <CustomDrawerContent {...props} />}
         screenOptions={{
           headerShown: false,
-          drawerActiveTintColor: "#4f6f3a",
-          drawerLabelStyle: { fontSize: 16 },
+          swipeEnabled: false,
+          drawerType: "front",
+          overlayColor: "rgba(0,0,0,0.25)",
+          drawerStyle: {
+            width: "92%",
+            backgroundColor: "#f5f5f5",
+          },
         }}
-        drawerContent={(props) => (
-          <CustomDrawerContent {...props} />
-        )}
       >
         <Drawer.Screen name="Home" component={MainStack} />
-        <Drawer.Screen name="About" component={AboutScreen} />
-        <Drawer.Screen name="Feedback" component={FeedbackScreen} />
       </Drawer.Navigator>
     </NavigationContainer>
-  );
-}
-
-/* ---------------- SIMPLE SCREENS ---------------- */
-
-function AboutScreen() {
-  return (
-    <View style={styles.center}>
-      <Text style={styles.pageTitle}>About Us</Text>
-    </View>
-  );
-}
-
-function FeedbackScreen() {
-  return (
-    <View style={styles.center}>
-      <Text style={styles.pageTitle}>Feedback</Text>
-    </View>
   );
 }
 
 /* ---------------- STYLES ---------------- */
 
 const styles = StyleSheet.create({
-  drawer: {
+  drawerContainer: {
     flex: 1,
-    paddingTop: 0,
+    backgroundColor: "#f3f3f3",
   },
 
   drawerHeader: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderColor: "#eee",
+    height: 180,
+    backgroundColor: "#88A96B",
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
 
-  drawerTitle: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#4f6f3a",
-  },
-
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#fff",
-  },
-
-  pageTitle: {
+  drawerHeaderTitle: {
+    color: "#fff",
     fontSize: 22,
     fontWeight: "700",
+  },
+
+  drawerBody: {
+    flex: 1,
+    paddingHorizontal: 18,
+    paddingTop: 10,
+  },
+
+  menuBtn: {
+    minHeight: 46,
+    backgroundColor: "#f3f3f3",
+    borderWidth: 1,
+    borderColor: "#222",
+    borderRadius: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 18,
+    marginBottom: 10,
+  },
+
+  activeMenuBtn: {
+    backgroundColor: "#e6e6e6",
+    borderColor: "#000",
+  },
+
+  menuLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  menuText: {
+    marginLeft: 14,
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#222",
   },
 });

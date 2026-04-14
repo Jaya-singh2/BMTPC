@@ -10,29 +10,49 @@ import {
 } from "react-native";
 import Pdf from "react-native-pdf";
 import AppLayout from "../components/AppLayout";
-//import Icon from "react-native-vector-icons/MaterialIcons";
+import Icon from "react-native-vector-icons/MaterialIcons";
+import ReactNativeBlobUtil from 'react-native-blob-util';
 
 export default function PdfViewerScreen({ route, navigation }: any) {
-  const { pdfUrl, title } = route.params;
+  const { pdfUrl, title , PAGE_NAME} = route.params;
   const [loading, setLoading] = useState(true);
 
-  const downloadPdf = async () => {
-    try {
-      const supported = await Linking.canOpenURL(pdfUrl);
-      if (!supported) {
-        Alert.alert("Error", "Cannot open this file");
-        return;
-      }
-      await Linking.openURL(pdfUrl);
-    } catch (err) {
-      console.log("Download error:", err);
-      Alert.alert("Error", "Failed to download PDF");
-    }
-  };
+const downloadPdf = async () => {
+  try {
+    const { config, fs } = ReactNativeBlobUtil;
+
+    const filePath = fs.dirs.DownloadDir + `/report_${Date.now()}.pdf`;
+
+    config({
+      addAndroidDownloads: {
+        useDownloadManager: true,
+        notification: true,
+        path: filePath,
+        description: 'Downloading PDF...',
+        mime: 'application/pdf',
+        mediaScannable: true,
+      },
+    })
+      .fetch('GET', pdfUrl)
+      .then((res) => {
+        Alert.alert('Success', 'PDF downloaded successfully');
+        console.log('File saved to:', res.path());
+      })
+      .catch((err) => {
+        console.log(err);
+        Alert.alert('Error', 'Download failed');
+      });
+
+  } catch (error) {
+    console.log(error);
+    Alert.alert('Error', 'Something went wrong');
+  }
+};
+
 
   return (
     <AppLayout
-      title="Earthquake Hazard"
+      title={PAGE_NAME}
       subtitle={title || "District Report"}
       showBack
       onBack={() => navigation.goBack()}
@@ -41,7 +61,7 @@ export default function PdfViewerScreen({ route, navigation }: any) {
 
         {/* Small floating download icon */}
         <TouchableOpacity style={styles.iconBtn} onPress={downloadPdf}>
-         {/*<Icon name="download" size={18} color="#fff" />*/}
+         <Icon name="download" size={18} color="#fff" />
         </TouchableOpacity>
 
         {/* Loader */}

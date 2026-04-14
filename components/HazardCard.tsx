@@ -25,7 +25,15 @@ const HazardCard: React.FC<Props> = ({
 
       <Text style={styles.arrow}>→</Text>
 
-      <Image source={icon} style={styles.icon} />
+      {title==="Vulnerability Risk Table"?
+           <Image
+              source={require("../assets/images/hazards/risk.png")}
+              style={styles.icon}
+           />:
+          <Image source={icon} style={styles.icon} />
+          }
+
+
 
       <Image
         source={require("../assets/images/hazards/crack.png")}

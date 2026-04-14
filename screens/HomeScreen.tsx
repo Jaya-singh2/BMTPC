@@ -7,27 +7,67 @@ import {
   Pressable,
   ActivityIndicator,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
+import YoutubePlayer from "react-native-youtube-iframe";
+import { useNavigation , useRoute} from "@react-navigation/native";
 import AppLayout from "../components/AppLayout";
 import HazardCard from "../components/HazardCard";
 import AboutUsCard from "../components/AboutUsCard";
-
 import { hazards } from "../data/HomeData";
 
 type Screen = "hazards" | "about";
 
 const HomeScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const [activeTab, setActiveTab] = useState<Screen>("hazards");
+  const route = useRoute<any>();
+  const [activeTab, setActiveTab] = useState<Screen>(
+    route?.params?.tab || "hazards"
+  );
 
+  useFocusEffect(
+    useCallback(() => {
+      if (route?.params?.tab) {
+        setActiveTab(route.params.tab);
+      }
+    }, [route?.params?.tab])
+  );
+  const [hazardsData, setHazardsData] = useState<any[]>([]);
   const [aboutData, setAboutData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [playing, setPlaying] = useState(false);
 
   /* ---------------- API CALL ---------------- */
   useEffect(() => {
+
     fetchAboutData();
+      fetchHazards();
   }, []);
+
+
+const fetchHazards = async () => {
+  try {
+    const res = await fetch(
+      "http://49.50.117.186/api/hazards",
+      {
+        headers: {
+          Authorization:
+            "Bearer c0eae05af99732c1961e74aa164bdd2ae6cb645306cde3a914d82d86f64b",
+        },
+      }
+    );
+
+    const json = await res.json();
+ const dataWithIcons = (json?.data || []).map((item: any, index: number) => ({
+   ...item,
+   icon: hazards[index]?.icon
+ }));
+
+ setHazardsData(dataWithIcons);
+  } catch (error) {
+    console.log("Hazards API error", error);
+  }
+};
 
   const fetchAboutData = async () => {
     try {
@@ -46,17 +86,19 @@ const HomeScreen: React.FC = () => {
 
   /* ---------------- DATA SWITCH ---------------- */
   const currentData =
-    activeTab === "hazards" ? hazards : aboutData;
+    activeTab === "hazards" ? hazardsData : aboutData;
 
   const CardComponent =
     activeTab === "hazards" ? HazardCard : AboutUsCard;
 
   /* ---------------- NAVIGATION FIX ---------------- */
   const handlePress = (item: any) => {
-    if (activeTab === "hazards" && item.screen) {
+    if (activeTab === "hazards") {
       //  open hazard specific screen
-      navigation.push(item.screen, {
-          pageName: item.page_name || item.title,
+      navigation.push("EarthquakeHazardScreen", {
+          pageName: item.page_name || item.name,
+          mapImage : item.hz_image,
+          hazardId: item.id
            });
     } else {
       //  open API content screen
@@ -117,16 +159,33 @@ const HomeScreen: React.FC = () => {
           <View style={styles.grid}>
             {currentData.map((item) => (
               <CardComponent
-                key={item.id || item.title}
-                title={item.title}
-                icon={
-                  item.icon ||
-                  require("../assets/images/about/atlas.png")
-                }
+                key={item.id}
+                title={item.name || item.title}
+                icon={item.icon}
                 onPress={() => handlePress(item)}
               />
             ))}
+       {activeTab === "hazards" && (
+        <CardComponent
+         title="Vulnerability Risk Table"
+         icon={null}
+     onPress={() => navigation.push("VulnerabilityRiskScreen")}
+   />
+ )}
           </View>
+
+          {/* ---------- Video Section ---------- */}
+
+          <Text style={styles.heading}>Vulnerability Atlas of India</Text>
+
+          <View style={styles.videoContainer}>
+            <YoutubePlayer
+              height={220}
+              play={playing}
+              videoId={"JW1tsE0lf2I"}
+            />
+          </View>
+
         </ScrollView>
       )}
     </AppLayout>
@@ -189,4 +248,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 20,
   },
+videoContainer: {
+  marginHorizontal: 20,
+  marginTop: 10,
+  borderRadius: 10,
+  overflow: "hidden",
+},
 });

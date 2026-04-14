@@ -26,7 +26,7 @@ const HazardCard: React.FC<Props> = ({ title, icon, onPress }) => {
 
       <Text style={styles.arrow}> → </Text>
 
-      <Image source={icon} style={styles.icon} />
+      <Image source={{ uri: icon }} style={styles.icon} />
 
       <Image
         source={require("../assets/images/hazards/crack.png")}

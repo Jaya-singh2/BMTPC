@@ -7,85 +7,87 @@ import {
   Platform,
 } from "react-native";
 import { WebView } from "react-native-webview";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import Geolocation from "react-native-geolocation-service";
 import AppLayout from "../components/AppLayout";
 
-/* =====================================================
-   TYPES
-===================================================== */
+const MAP_CONFIG = {
+  "Earthquake Hazard": {
+    minLat: 6.4627,
+    maxLat: 37.0841,
+    minLng: 68.1097,
+    maxLng: 97.3956,
+  },
 
-type Coordinate = [number, number];
+  "Wind Hazard": {
+    minLat: 6.4627,
+     maxLat: 39.4990,
+     minLng: 68.1097,
+      maxLng: 94.0956
+  },
 
-interface HazardState {
-  state_id: number;
-  state_name: string;
-  severity: "Low" | "Medium" | "High";
-  image: string;
-  coordinates: Coordinate[];
+  "Flood Hazard": {
+   minLat: 6.4627,
+       maxLat: 39.1990,
+       minLng: 68.1097,
+        maxLng: 91.0956
+  },
+
+  "Landslide Hazard": {
+      minLat: 6.4627,
+     maxLat: 38.0000,
+     minLng: 68.1097,
+      maxLng: 94.0056
+  },
+
+  "Thunderstorm Hazard": {
+   minLat: 6.4627,
+       maxLat: 39.8000,
+       minLng: 68.1097,
+        maxLng: 94.0056
 }
-
-interface ApiResponse {
-  status: boolean;
-  data: HazardState[];
-}
-
-type Screen = "hazards" | "about" | "feedback";
-
-/* =====================================================
-   CONSTANTS
-===================================================== */
-
-const API_URL =
-  "http://49.50.117.186/api/v1/hazard-state-assembly-coordinates?hazard_id=1";
-
-const JPG_MAP_URL =
-  "http://49.50.117.186/assets/uploads/img/hazards/1767087922_EQ_INDIA.jpg";
-
-/* India bounds for GPS → pixel conversion */
-const INDIA_BOUNDS = {
-  minLat: 6.4627,
-  maxLat: 37.0841,
-  minLng: 68.1097,
-  maxLng: 97.3956,
 };
-
-/* =====================================================
-   SCREEN
-===================================================== */
 
 export default function HazardMapScreen() {
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+
+  const hazardId = route?.params?.hazardId;
+  const JPG_MAP_URL =
+    route?.params?.mapImage ||
+    "http://49.50.117.186/assets/uploads/img/hazards/1767087922_EQ_INDIA.jpg";
+
+  const API_URL = `http://49.50.117.186/api/v1/hazard-state-assembly-coordinates?hazard_id=${hazardId}`;
+
+  const PAGE_NAME = route?.params?.pageName;
+
   const webViewRef = useRef<WebView>(null);
 
-  const [activeTab, setActiveTab] = useState<Screen>("hazards");
-  const [hazardData, setHazardData] = useState<HazardState[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [hazardData, setHazardData] = useState<any[]>([]);
+  const [apiLoading, setApiLoading] = useState(true);
+  const [locationLoading, setLocationLoading] = useState(true);
+  const [mapReady, setMapReady] = useState(false);
 
-  /* ⭐ store LAT/LNG only */
-  const [userLatLng, setUserLatLng] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
+  const [userLatLng, setUserLatLng] = useState<any>(null);
 
-  /* =====================================================
-     FETCH STATES
-  ===================================================== */
+  /* ================= FETCH API ================= */
 
   useEffect(() => {
-    fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-    })
-      .then(res => res.json())
-      .then((json: ApiResponse) => setHazardData(json?.data || []))
-      .catch(() => setHazardData([]))
-      .finally(() => setLoading(false));
-  }, []);
+    if (!hazardId) {
+      setApiLoading(false);
+      return;
+    }
 
-  /* =====================================================
-     GET GPS LOCATION
-  ===================================================== */
+    fetch(API_URL, { method: "POST" })
+      .then((res) => res.json())
+      .then((json) => {
+        setHazardData(json?.data || []);
+      })
+      .catch(() => setHazardData([]))
+      .finally(() => setApiLoading(false));
+  }, [hazardId]);
+
+  /* ================= LOCATION ================= */
 
   useEffect(() => {
     const getLocation = async () => {
@@ -94,65 +96,58 @@ export default function HazardMapScreen() {
           const granted = await PermissionsAndroid.request(
             PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
           );
-
-          if (granted !== PermissionsAndroid.RESULTS.GRANTED) return;
+          if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+            setLocationLoading(false);
+            return;
+          }
         }
 
         Geolocation.getCurrentPosition(
-          pos => {
-            const { latitude, longitude } = pos.coords;
-
-            console.log("USER LOCATION:", latitude, longitude);
-
-            setUserLatLng({ latitude, longitude });
+          (pos) => {
+            setUserLatLng({
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+            });
+            setLocationLoading(false);
           },
-          err => console.log(err),
-          {
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: 10000,
-          }
+          () => setLocationLoading(false),
+          { enableHighAccuracy: true }
         );
-      } catch {}
+      } catch {
+        setLocationLoading(false);
+      }
     };
 
     getLocation();
   }, []);
 
-  /* =====================================================
-     STATE CLICK
-  ===================================================== */
+  /* ================= MESSAGE ================= */
 
   const onMessage = (event: any) => {
     try {
-      const { state_id } = JSON.parse(event.nativeEvent.data);
+      const data = JSON.parse(event.nativeEvent.data);
 
-      const selected = hazardData.find(s => s.state_id === state_id);
+      if (data.type === "MAP_READY") {
+        setMapReady(true);
+        return;
+      }
 
-      if (!selected) return;
-
-      navigation.navigate("StateDetail", {
-        stateData: selected,
-      });
+      if (data.state_id) {
+        const selected = hazardData.find(
+          (s) => s.state_id === data.state_id
+        );
+        if (!selected) return;
+        navigation.navigate("StateDetail", {
+          stateData: selected,
+          pageName: PAGE_NAME
+        });
+      }
     } catch {}
   };
 
-  /* =====================================================
-     LOADER
-  ===================================================== */
+  /* ================= HTML ================= */
 
-  if (loading) {
-    return (
-      <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#6f8f55" />
-      </View>
-    );
-  }
-
-  /* =====================================================
-     WEBVIEW HTML
-===================================================== */
-const html = `
+  const html = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -160,89 +155,147 @@ const html = `
 content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 
 <style>
+
 html,body{
-  margin:0;
-  padding:0;
-  overflow:hidden;
-  background:#fff;
-  touch-action:none;
+  margin:0;padding:0;overflow:hidden;background:#fff;touch-action:none;
 }
 
 #wrapper{
-  position:relative;
-  width:100vw;
-  height:100vh;
-  overflow:hidden;
-  touch-action:none;
+  position:relative;width:100vw;height:100vh;overflow:hidden;touch-action:none;
 }
 
 #mapLayer{
-  position:absolute;
-  top:0;
-  left:0;
-  transform-origin:0 0;
+  position:absolute;top:0;left:0;transform-origin:0 0;
 }
 
 #mapImage{
-  width:100vw;
-  height:auto;
-  display:block;
+  width:100vw;height:auto;display:block;
 }
 
 #overlay{
-  position:absolute;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
+  position:absolute;top:0;left:0;width:100%;height:100%;
 }
 
 polygon{
-  stroke:#ff6600;
-  stroke-width:2;
+  stroke:none;
   cursor:pointer;
 }
 
+/* USER DOT */
+
 #userDot{
   position:absolute;
-  width:14px;
-  height:14px;
-  background:red;
+  width:5px;
+  height:5px;
+  background:#ff0000;
   border-radius:50%;
   border:2px solid white;
-  transform:translate(-7px,-7px);
+  transform:translate(-50%, -50%);
   pointer-events:none;
-  animation:blink 1s infinite;
   z-index:999;
+  animation:pulse 1.5s infinite;
+}
+
+#userDot::after{
+  content:'';
+  position:absolute;
+  width:100%;
+  height:100%;
+  background:rgba(255,0,0,0.4);
+  border-radius:50%;
+  top:0;
+  left:0;
+  animation:ripple 1.5s infinite;
+}
+
+@keyframes pulse{
+  0%{
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50%{
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  100%{
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes ripple{
+  0%{
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100%{
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+/* LABEL */
+
+#zoneLabel {
+  position:absolute;
+  background: rgba(255,255,255,0.5);
+  padding:6px 10px;
+  border-radius:6px;
+  color:#cc0000;
+  font-size:17px;
+  font-weight:bold;
+  transform:translate(-50%, 0);
+  white-space:nowrap;
+  pointer-events:none;
+  z-index:9999;
+  animation: blink 1s infinite;
+  text-align: center;
 }
 
 @keyframes blink{
-  0%{opacity:1;}
-  50%{opacity:0.2;}
-  100%{opacity:1;}
+  0%{ opacity:1; }
+  50%{ opacity:0; }
+  100%{ opacity:1; }
 }
+
 </style>
 </head>
 
 <body>
 
 <div id="wrapper">
+
   <div id="mapLayer">
     <img id="mapImage" src="${JPG_MAP_URL}" />
     <svg id="overlay"></svg>
     <div id="userDot" style="display:none;"></div>
   </div>
+
+  <div id="zoneLabel" style="display:none;">
+    You are in High Damage Risk Zone
+  </div>
+
 </div>
 
 <script>
 
 const hazardData = ${JSON.stringify(hazardData)};
 const userLatLng = ${JSON.stringify(userLatLng)};
-const INDIA_BOUNDS = ${JSON.stringify(INDIA_BOUNDS)};
+const MAP_CONFIG = ${JSON.stringify(MAP_CONFIG)};
+const PAGE_NAME = "${PAGE_NAME}";
+const INDIA_BOUNDS = MAP_CONFIG[PAGE_NAME] || MAP_CONFIG["Earthquake Hazard"];
+
+function getZoneText(type){
+  if(type === "Earthquake Hazard"){
+    return "You are in <b>(Zone-II)</b><br><span style='color:red'>High Damage Risk Zone</span>";
+  }
+  if(type === "Wind Hazard"){
+    return "You are in <b>(Zone-II)</b><br><span style='color:red'>Very High Damage Risk Zone</span>";
+  }
+  return ""; // ❌ no label for others
+}
 
 const img = document.getElementById('mapImage');
 const overlay = document.getElementById('overlay');
 const userDot = document.getElementById('userDot');
+const zoneLabel = document.getElementById('zoneLabel');
+
 const mapLayer = document.getElementById('mapLayer');
 const wrapper = document.getElementById('wrapper');
 
@@ -252,19 +305,23 @@ let translateY = 0;
 
 let startDistance = 0;
 let startScale = 1;
-let startX = 0;
-let startY = 0;
 let lastTouchX = 0;
 let lastTouchY = 0;
 let isDragging = false;
 
-/* ---------- UPDATE TRANSFORM ---------- */
-function updateTransform(){
-  mapLayer.style.transform =
-    "translate(" + translateX + "px," + translateY + "px) scale(" + scale + ")";
+let x = 0;
+let y = 0;
+
+/* ===== LABEL FIX ===== */
+
+function updateLabelPosition() {
+  if (!userLatLng) return;
+  zoneLabel.style.left = (x * scale + translateX) + "px";
+  zoneLabel.style.top  = (y * scale + translateY + 15) + "px";
 }
 
-/* ---------- BOUNDARY LIMIT ---------- */
+/* ===== BOUNDS ===== */
+
 function applyBounds(){
 
   const wrapperW = wrapper.clientWidth;
@@ -273,7 +330,6 @@ function applyBounds(){
   const imgW = img.clientWidth * scale;
   const imgH = img.clientHeight * scale;
 
-  /* ---- HORIZONTAL ---- */
   if(imgW <= wrapperW){
     translateX = (wrapperW - imgW) / 2;
   } else {
@@ -282,7 +338,6 @@ function applyBounds(){
     if(translateX < minX) translateX = minX;
   }
 
-  /* ---- VERTICAL ---- */
   if(imgH <= wrapperH){
     translateY = (wrapperH - imgH) / 2;
   } else {
@@ -292,15 +347,26 @@ function applyBounds(){
   }
 }
 
+/* ===== TRANSFORM ===== */
 
-/* ---------- PINCH DISTANCE ---------- */
+function updateTransform(){
+
+  applyBounds();
+
+  mapLayer.style.transform =
+    "translate(" + translateX + "px," + translateY + "px) scale(" + scale + ")";
+
+  updateLabelPosition(); // ✅ FIX
+}
+
+/* ===== TOUCH ===== */
+
 function getDistance(touches){
   let dx = touches[0].clientX - touches[1].clientX;
   let dy = touches[0].clientY - touches[1].clientY;
   return Math.sqrt(dx*dx + dy*dy);
 }
 
-/* ---------- TOUCH START ---------- */
 wrapper.addEventListener("touchstart", function(e){
 
   if(e.touches.length === 2){
@@ -316,36 +382,31 @@ wrapper.addEventListener("touchstart", function(e){
 
 });
 
-/* ---------- TOUCH MOVE ---------- */
 wrapper.addEventListener("touchmove", function(e){
 
   e.preventDefault();
 
-  /* PINCH ZOOM */
   if(e.touches.length === 2){
 
     let newDistance = getDistance(e.touches);
     let zoomFactor = newDistance / startDistance;
-
     let newScale = startScale * zoomFactor;
 
     if(newScale < 1) newScale = 1;
     if(newScale > 6) newScale = 6;
 
     const rect = wrapper.getBoundingClientRect();
-    const pinchCenterX = (e.touches[0].clientX + e.touches[1].clientX)/2 - rect.left;
-    const pinchCenterY = (e.touches[0].clientY + e.touches[1].clientY)/2 - rect.top;
+    const centerX = (e.touches[0].clientX + e.touches[1].clientX)/2 - rect.left;
+    const centerY = (e.touches[0].clientY + e.touches[1].clientY)/2 - rect.top;
 
-    translateX = pinchCenterX - (pinchCenterX - translateX) * (newScale/scale);
-    translateY = pinchCenterY - (pinchCenterY - translateY) * (newScale/scale);
+    translateX = centerX - (centerX - translateX) * (newScale/scale);
+    translateY = centerY - (centerY - translateY) * (newScale/scale);
 
     scale = newScale;
 
-    applyBounds();
     updateTransform();
   }
 
-  /* DRAG */
   if(e.touches.length === 1 && isDragging){
 
     let dx = e.touches[0].clientX - lastTouchX;
@@ -357,18 +418,17 @@ wrapper.addEventListener("touchmove", function(e){
     lastTouchX = e.touches[0].clientX;
     lastTouchY = e.touches[0].clientY;
 
-    applyBounds();
     updateTransform();
   }
 
 });
 
-/* ---------- TOUCH END ---------- */
 wrapper.addEventListener("touchend", function(){
   isDragging = false;
 });
 
-/* ---------- LOAD ---------- */
+/* ===== INIT ===== */
+
 img.onload = function(){
 
   const naturalW = img.naturalWidth;
@@ -376,22 +436,25 @@ img.onload = function(){
 
   overlay.setAttribute("viewBox","0 0 "+naturalW+" "+naturalH);
 
+  // ✅ POLYGONS (CLICK WORKING)
   hazardData.forEach(state=>{
+
     if(!state.coordinates?.length) return;
 
-    const pts = state.coordinates
-      .map(p=>p[0]+","+p[1])
-      .join(" ");
+    const pts = state.coordinates.map(p=>p[0]+","+p[1]).join(" ");
 
     const poly =
       document.createElementNS("http://www.w3.org/2000/svg","polygon");
 
     poly.setAttribute("points", pts);
+
     poly.setAttribute("fill",
       state.severity==="High" ? "rgba(255,0,0,.45)" :
       state.severity==="Medium" ? "rgba(255,165,0,.45)" :
-      "rgba(0,200,0,.4)"
+      "transparent"
     );
+
+    poly.setAttribute("stroke", "none");
 
     poly.onclick=()=>{
       window.ReactNativeWebView.postMessage(
@@ -400,56 +463,69 @@ img.onload = function(){
     };
 
     overlay.appendChild(poly);
+
   });
 
-  if(!userLatLng) return;
+  if(userLatLng){
 
-  const renderedW = img.clientWidth;
-  const renderedH = img.clientHeight;
+    const renderedW = img.clientWidth;
+    const renderedH = img.clientHeight;
 
-  let x =
-    ((userLatLng.longitude-INDIA_BOUNDS.minLng)/
-    (INDIA_BOUNDS.maxLng-INDIA_BOUNDS.minLng))*renderedW;
+x =
+ ((userLatLng.longitude-INDIA_BOUNDS.minLng)/
+ (INDIA_BOUNDS.maxLng-INDIA_BOUNDS.minLng))*renderedW;
 
-  let y =
-    ((INDIA_BOUNDS.maxLat-userLatLng.latitude)/
-    (INDIA_BOUNDS.maxLat-INDIA_BOUNDS.minLat))*renderedH;
+y =
+ ((INDIA_BOUNDS.maxLat-userLatLng.latitude)/
+ (INDIA_BOUNDS.maxLat-INDIA_BOUNDS.minLat))*renderedH;
 
-  userDot.style.left = x + "px";
-  userDot.style.top  = y + "px";
-  userDot.style.display = "block";
+// ✅ apply offset safely
+if(INDIA_BOUNDS.offsetX){
+  x += INDIA_BOUNDS.offsetX;
+}
+if(INDIA_BOUNDS.offsetY){
+  y += INDIA_BOUNDS.offsetY;
+}
 
-  /* AUTO CENTER */
-  scale = 2;
+// ✅ clamp inside image (VERY IMPORTANT)
+x = Math.max(0, Math.min(renderedW, x));
+y = Math.max(0, Math.min(renderedH, y));
 
-  translateX = wrapper.clientWidth/2 - x*scale;
-  translateY = wrapper.clientHeight/2 - y*scale;
+    userDot.style.left = x + "px";
+    userDot.style.top  = y + "px";
 
-  applyBounds();
-  updateTransform();
+    userDot.style.display = "block";
+    const labelText = getZoneText(PAGE_NAME);
+
+    if(labelText){
+      zoneLabel.innerHTML = labelText;
+      zoneLabel.style.display = "block";
+    }else{
+      zoneLabel.style.display = "none";
+    }
+
+    scale = 3;
+
+    translateX = wrapper.clientWidth/2 - x*scale;
+    translateY = wrapper.clientHeight/2 - y*scale;
+
+    updateTransform();
+  }
+
+  window.ReactNativeWebView.postMessage(JSON.stringify({type:"MAP_READY"}));
+
 };
 
 </script>
+
 </body>
 </html>
 `;
 
-  /* =====================================================
-     RENDER
-===================================================== */
-
   return (
-    <AppLayout
-      title="Earthquake Hazard"
-      subtitle="India"
-      activeTab={activeTab}
-      onTabChange={setActiveTab}
-      showBack
-      showLogo
-    >
+    <AppLayout title={PAGE_NAME} subtitle="India" showBack showLogo>
       <View style={{ flex: 1 }}>
         <WebView
-          key={JSON.stringify(userLatLng)}
           ref={webViewRef}
           source={{ html }}
           originWhitelist={["*"]}
@@ -457,19 +533,22 @@ img.onload = function(){
           domStorageEnabled
           onMessage={onMessage}
         />
+
+        {(apiLoading || locationLoading || !mapReady) && (
+          <View style={styles.loaderOverlay}>
+            <ActivityIndicator size="large" color="#6f8f55" />
+          </View>
+        )}
       </View>
     </AppLayout>
   );
 }
 
-/* =====================================================
-   STYLES
-===================================================== */
-
 const styles = StyleSheet.create({
-  loader: {
-    flex: 1,
+  loaderOverlay: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#fff",
   },
 });

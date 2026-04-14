@@ -40,7 +40,7 @@ export default function StateDistrictHazardScreen({
   const webViewRef = useRef<WebView>(null);
 
   const stateData: HazardState | undefined = route?.params?.stateData;
-
+  const PAGE_NAME = route?.params?.pageName;
   const [districts, setDistricts] = useState<District[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -62,6 +62,7 @@ export default function StateDistrictHazardScreen({
       .then(res => res.json())
       .then((json: ApiResponse) => {
         setDistricts(json?.data || []);
+        console.log(json, "states")
       })
       .catch(() => setDistricts([]))
       .finally(() => setLoading(false));
@@ -105,6 +106,8 @@ export default function StateDistrictHazardScreen({
       navigation.navigate("PdfViewerScreen", {
         pdfUrl: json.pdf_url,
         title: json.district_name || "District Report",
+        PAGE_NAME
+
       });
     } catch (error) {
       console.error(error);
@@ -124,118 +127,236 @@ export default function StateDistrictHazardScreen({
 
   /* ---------------- WEBVIEW HTML ---------------- */
 
-  const html = `
-<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<style>
-  html, body {
-    margin:0;
-    padding:0;
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    background:#fff;
-  }
+ const html = `
+ <!DOCTYPE html>
+ <html>
+ <head>
+ <meta name="viewport"
+ content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 
-  #container {
-    width:100%;
-    height:100%;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-  }
+ <style>
+ html, body {
+   margin:0;
+   padding:0;
+   overflow:hidden;
+   background:#fff;
+   touch-action:none;
+ }
+* {
+  -webkit-tap-highlight-color: transparent;
+}
 
-  #wrapper {
-    position:relative;
-  }
 
-  #map {
-    max-width:100%;
-    max-height:100%;
-    display:block;
-  }
+ #wrapper {
+   position:relative;
+   width:100vw;
+   height:100vh;
+   overflow:hidden;
+ }
 
-  #overlay {
-    position:absolute;
-    top:0;
-    left:0;
-  }
+ #mapLayer {
+   position:absolute;
+   top:0;
+   left:0;
+   transform-origin:0 0;
+ }
 
-  polygon {
-    fill:rgba(0,200,0,.45);
-    stroke:#006400;
-    stroke-width:1;
-    cursor:pointer;
-  }
+ #map {
+   width:100vw;
+   height:auto;
+   display:block;
+ }
 
-  polygon:hover {
-    fill:rgba(255,0,0,.5);
-  }
-</style>
-</head>
+ #overlay {
+   position:absolute;
+   top:0;
+   left:0;
+   width:100%;
+   height:100%;
+ }
 
-<body>
-<div id="container">
-  <div id="wrapper">
-    <img id="map" src="${stateData?.image || ""}" />
-    <svg id="overlay"></svg>
-  </div>
-</div>
+ polygon {
+   fill:transparent;
+   stroke:none;
+   stroke-width:1;
+   cursor:pointer;
+ }
+ /*polygon:hover {
+   fill:rgba(255,0,0,.5);
+ }*/
+ </style>
+ </head>
 
-<script>
-(function () {
-  const districts = ${JSON.stringify(districts)};
-  const img = document.getElementById("map");
-  const svg = document.getElementById("overlay");
+ <body>
 
-  img.onload = function () {
-    const naturalW = img.naturalWidth;
-    const naturalH = img.naturalHeight;
+ <div id="wrapper">
+   <div id="mapLayer">
+     <img id="map" src="${stateData?.image || ""}" />
+     <svg id="overlay"></svg>
+   </div>
+ </div>
 
-    const renderedW = img.clientWidth;
-    const renderedH = img.clientHeight;
+ <script>
+ (function () {
 
-    svg.setAttribute("width", renderedW);
-    svg.setAttribute("height", renderedH);
-    svg.setAttribute("viewBox", "0 0 " + naturalW + " " + naturalH);
-    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+   const districts = ${JSON.stringify(districts)};
+   const img = document.getElementById("map");
+   const svg = document.getElementById("overlay");
+   const mapLayer = document.getElementById("mapLayer");
+   const wrapper = document.getElementById("wrapper");
 
-    districts.forEach(d => {
-      if (!d.coordinates?.length) return;
+   let scale = 1;
+   let translateX = 0;
+   let translateY = 0;
 
-      const points = d.coordinates
-        .map(p => p.x + "," + p.y)
-        .join(" ");
+   let startDistance = 0;
+   let startScale = 1;
+   let lastTouchX = 0;
+   let lastTouchY = 0;
+   let isDragging = false;
 
-      const polygon = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "polygon"
-      );
+   function applyBounds(){
+     const wrapperW = wrapper.clientWidth;
+     const wrapperH = wrapper.clientHeight;
 
-      polygon.setAttribute("points", points);
+     const imgW = img.clientWidth * scale;
+     const imgH = img.clientHeight * scale;
 
-      polygon.onclick = function () {
-        window.ReactNativeWebView.postMessage(
-          JSON.stringify({ district_id: d.district_id })
-        );
-      };
+     if(imgW <= wrapperW){
+       translateX = (wrapperW - imgW) / 2;
+     } else {
+       const minX = wrapperW - imgW;
+       if(translateX > 0) translateX = 0;
+       if(translateX < minX) translateX = minX;
+     }
 
-      svg.appendChild(polygon);
-    });
-  };
-})();
-</script>
-</body>
-</html>
-`;
+     if(imgH <= wrapperH){
+       translateY = (wrapperH - imgH) / 2;
+     } else {
+       const minY = wrapperH - imgH;
+       if(translateY > 0) translateY = 0;
+       if(translateY < minY) translateY = minY;
+     }
+   }
+
+   function updateTransform(){
+     applyBounds();
+     mapLayer.style.transform =
+       "translate(" + translateX + "px," + translateY + "px) scale(" + scale + ")";
+   }
+
+   function getDistance(touches){
+     let dx = touches[0].clientX - touches[1].clientX;
+     let dy = touches[0].clientY - touches[1].clientY;
+     return Math.sqrt(dx*dx + dy*dy);
+   }
+
+   wrapper.addEventListener("touchstart", function(e){
+
+     if(e.touches.length === 2){
+       startDistance = getDistance(e.touches);
+       startScale = scale;
+     }
+
+     if(e.touches.length === 1 && scale > 1){
+       isDragging = true;
+       lastTouchX = e.touches[0].clientX;
+       lastTouchY = e.touches[0].clientY;
+     }
+
+   });
+
+   wrapper.addEventListener("touchmove", function(e){
+
+     e.preventDefault();
+
+     if(e.touches.length === 2){
+
+       let newDistance = getDistance(e.touches);
+       let zoomFactor = newDistance / startDistance;
+       let newScale = startScale * zoomFactor;
+
+       if(newScale < 1) newScale = 1;
+       if(newScale > 6) newScale = 6;
+
+       const rect = wrapper.getBoundingClientRect();
+       const centerX = (e.touches[0].clientX + e.touches[1].clientX)/2 - rect.left;
+       const centerY = (e.touches[0].clientY + e.touches[1].clientY)/2 - rect.top;
+
+       translateX = centerX - (centerX - translateX) * (newScale/scale);
+       translateY = centerY - (centerY - translateY) * (newScale/scale);
+
+       scale = newScale;
+
+       updateTransform();
+     }
+
+     if(e.touches.length === 1 && isDragging){
+
+       let dx = e.touches[0].clientX - lastTouchX;
+       let dy = e.touches[0].clientY - lastTouchY;
+
+       translateX += dx;
+       translateY += dy;
+
+       lastTouchX = e.touches[0].clientX;
+       lastTouchY = e.touches[0].clientY;
+
+       updateTransform();
+     }
+
+   });
+
+   wrapper.addEventListener("touchend", function(){
+     isDragging = false;
+   });
+
+   img.onload = function () {
+
+     const naturalW = img.naturalWidth;
+     const naturalH = img.naturalHeight;
+
+     svg.setAttribute("viewBox", "0 0 " + naturalW + " " + naturalH);
+
+     districts.forEach(d => {
+       if (!d.coordinates?.length) return;
+
+       const points = d.coordinates
+         .map(p => p.x + "," + p.y)
+         .join(" ");
+
+       const polygon = document.createElementNS(
+         "http://www.w3.org/2000/svg",
+         "polygon"
+       );
+
+       polygon.setAttribute("points", points);
+
+       polygon.onclick = function () {
+         window.ReactNativeWebView.postMessage(
+           JSON.stringify({ district_id: d.district_id })
+         );
+       };
+
+       svg.appendChild(polygon);
+     });
+
+     updateTransform();
+   };
+
+ })();
+ </script>
+
+ </body>
+ </html>
+ `;
+
 
   /* ---------------- RENDER ---------------- */
 
   return (
     <AppLayout
-      title="Earthquake Hazard"
+      title={PAGE_NAME}
       subtitle={stateData?.state_name || ""}
       activeTab={activeTab}
       onTabChange={setActiveTab}
