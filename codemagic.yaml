@@ -1,38 +1,27 @@
 workflows:
   ios-build:
     name: iOS Build
-    max_build_duration: 60
 
     environment:
-      node: 20
-      xcode: latest
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.bmtpc.iosapp
+
+    integrations:
+      app_store_connect: codemagic
 
     scripts:
       - name: Install dependencies
         script: |
           npm install
 
-      - name: Install pods
+      - name: Install CocoaPods
         script: |
           cd ios
           pod install
-          cd ..
-
-      - name: Apply provisioning
-        script: |
-          xcode-project use-profiles
 
       - name: Build iOS
         script: |
-          xcodebuild \
-            -workspace ios/TestApp.xcworkspace \
-            -scheme TestApp \
-            -configuration Release \
-            -sdk iphoneos \
-            DEVELOPMENT_TEAM=EJC8C58G3F \
-            CODE_SIGN_STYLE=Manual \
-            PRODUCT_BUNDLE_IDENTIFIER=com.bmtpc.iosapp \
-            -archivePath $CM_BUILD_DIR/TestApp.xcarchive archive
-
-    artifacts:
-      - $CM_BUILD_DIR/**/*.ipa
+          xcode-project build-ipa \
+            --workspace ios/TestApp.xcworkspace \
+            --scheme TestApp
