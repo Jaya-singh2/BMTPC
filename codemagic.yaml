@@ -2,7 +2,12 @@ workflows:
   ios-build:
     name: iOS Build
 
+    max_build_duration: 60
+
     environment:
+      xcode: latest
+      node: 20
+
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.bmtpc.iosapp
@@ -20,8 +25,22 @@ workflows:
           cd ios
           pod install
 
-      - name: Build iOS
+      - name: Set up code signing
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "$APP_STORE_CONNECT_ISSUER_ID" "$APP_STORE_CONNECT_KEY_IDENTIFIER" "$APP_STORE_CONNECT_PRIVATE_KEY"
+          keychain add-certificates
+          xcode-project use-profiles
+
+      - name: Build iOS IPA
         script: |
           xcode-project build-ipa \
             --workspace ios/TestApp.xcworkspace \
             --scheme TestApp
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+
+    publishing:
+      app_store_connect:
+        auth: integration
