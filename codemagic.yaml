@@ -15,25 +15,26 @@ workflows:
         script: |
           npm install
 
-      - name: Install pods
+      - name: Install CocoaPods
         script: |
           cd ios
           pod install
           cd ..
 
-      - name: Apply signing
+      - name: Apply provisioning profiles
         script: |
           xcode-project use-profiles
 
-      - name: Build iOS
+      - name: Build iOS App
         script: |
           xcodebuild \
             -workspace ios/TestApp.xcworkspace \
             -scheme TestApp \
             -configuration Release \
             -sdk iphoneos \
-            DEVELOPMENT_TEAM=$(xcode-project detect-development-team) \
+            DEVELOPMENT_TEAM=EJC8C58G3F \
             CODE_SIGN_STYLE=Automatic \
+            PRODUCT_BUNDLE_IDENTIFIER=com.bmtpc.iosapp \
             -allowProvisioningUpdates \
             -archivePath $CM_BUILD_DIR/TestApp.xcarchive archive
 
