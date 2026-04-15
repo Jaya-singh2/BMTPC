@@ -21,7 +21,7 @@ workflows:
           pod install
           cd ..
 
-      - name: Apply signing
+      - name: Apply iOS signing
         script: |
           xcode-project use-profiles
 
