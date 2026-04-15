@@ -21,7 +21,7 @@ workflows:
           pod install
           cd ..
 
-      - name: Apply iOS signing
+      - name: Apply signing
         script: |
           xcode-project use-profiles
 
@@ -32,6 +32,9 @@ workflows:
             -scheme TestApp \
             -configuration Release \
             -sdk iphoneos \
+            DEVELOPMENT_TEAM=$(xcode-project detect-development-team) \
+            CODE_SIGN_STYLE=Automatic \
+            -allowProvisioningUpdates \
             -archivePath $CM_BUILD_DIR/TestApp.xcarchive archive
 
     artifacts:
