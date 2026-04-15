@@ -2,8 +2,6 @@ workflows:
   ios-build:
     name: iOS Build
 
-    max_build_duration: 60
-
     environment:
       xcode: latest
       node: 20
@@ -25,22 +23,12 @@ workflows:
           cd ios
           pod install
 
-      - name: Set up code signing
-        script: |
-          keychain initialize
-          app-store-connect fetch-signing-files "$APP_STORE_CONNECT_ISSUER_ID" "$APP_STORE_CONNECT_KEY_IDENTIFIER" "$APP_STORE_CONNECT_PRIVATE_KEY"
-          keychain add-certificates
-          xcode-project use-profiles
-
       - name: Build iOS IPA
         script: |
           xcode-project build-ipa \
             --workspace ios/TestApp.xcworkspace \
-            --scheme TestApp
+            --scheme TestApp \
+            --archive-xcargs "CODE_SIGN_STYLE=Automatic DEVELOPMENT_TEAM=EJC8C58G3F"
 
     artifacts:
       - build/ios/ipa/*.ipa
-
-    publishing:
-      app_store_connect:
-        auth: integration
