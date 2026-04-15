@@ -6,26 +6,23 @@ workflows:
     environment:
       node: 20
       xcode: latest
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.bmtpc.iosapp
 
     scripts:
       - name: Install dependencies
         script: |
           npm install
 
-      - name: Install CocoaPods
+      - name: Install pods
         script: |
           cd ios
           pod install
           cd ..
 
-      - name: Apply provisioning profiles
+      - name: Apply provisioning
         script: |
           xcode-project use-profiles
 
-      - name: Build iOS App
+      - name: Build iOS
         script: |
           xcodebuild \
             -workspace ios/TestApp.xcworkspace \
@@ -33,9 +30,8 @@ workflows:
             -configuration Release \
             -sdk iphoneos \
             DEVELOPMENT_TEAM=EJC8C58G3F \
-            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_STYLE=Manual \
             PRODUCT_BUNDLE_IDENTIFIER=com.bmtpc.iosapp \
-            -allowProvisioningUpdates \
             -archivePath $CM_BUILD_DIR/TestApp.xcarchive archive
 
     artifacts:
