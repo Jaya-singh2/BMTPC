@@ -28,7 +28,6 @@ workflows:
           xcode-project build-ipa \
             --workspace ios/TestApp.xcworkspace \
             --scheme TestApp \
-            --export-method app-store \
             --verbose
 
     artifacts:
