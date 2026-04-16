@@ -27,7 +27,9 @@ workflows:
         script: |
           xcode-project build-ipa \
             --workspace ios/TestApp.xcworkspace \
-            --scheme TestApp
+            --scheme TestApp \
+            --export-method app-store \
+            --verbose
 
     artifacts:
       - build/ios/ipa/*.ipa
