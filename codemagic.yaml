@@ -1,10 +1,11 @@
 workflows:
   ios-build:
-    name: iOS Test Build
+    name: iOS Build
 
     environment:
       xcode: latest
       node: 20
+
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.bmtpc.iosapp
@@ -14,39 +15,24 @@ workflows:
 
     scripts:
       - name: Install dependencies
-        script: npm install
+        script: |
+          npm install
 
       - name: Install CocoaPods
         script: |
           cd ios
           pod install
 
-      - name: Create ExportOptions.plist
+      - name: Set up signing
         script: |
-          cat > exportOptions.plist <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>app-store</string>
-            <key>signingStyle</key>
-            <string>automatic</string>
-          </dict>
-          </plist>
-          EOF
+          xcode-project use-profiles
 
       - name: Build iOS IPA
         script: |
           xcode-project build-ipa \
             --workspace ios/TestApp.xcworkspace \
             --scheme TestApp \
-            --export-options-plist exportOptions.plist
+            --verbose
 
     artifacts:
       - build/ios/ipa/*.ipa
-
-    publishing:
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: true
