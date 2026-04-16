@@ -2,7 +2,6 @@ workflows:
 ios-build:
 name: iOS Build
 
-```
 environment:
   xcode: latest
   node: 20
@@ -33,4 +32,4 @@ scripts:
 
 artifacts:
   - build/ios/ipa/*.ipa
-```
+
