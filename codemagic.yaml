@@ -1,11 +1,10 @@
 workflows:
   ios-build:
-    name: iOS Build
+    name: iOS Test Build
 
     environment:
       xcode: latest
       node: 20
-
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.bmtpc.iosapp
@@ -15,24 +14,20 @@ workflows:
 
     scripts:
       - name: Install dependencies
-        script: |
-          npm install
+        script: npm install
 
       - name: Install CocoaPods
         script: |
           cd ios
           pod install
 
-      - name: Set up signing
-        script: |
-          xcode-project use-profiles
-
       - name: Build iOS IPA
-        script: |
-          xcode-project build-ipa \
-            --workspace ios/TestApp.xcworkspace \
-            --scheme TestApp \
-            --verbose
+        script: xcode-project build-ipa --workspace ios/TestApp.xcworkspace --scheme TestApp --export-method app-store
 
     artifacts:
       - build/ios/ipa/*.ipa
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
