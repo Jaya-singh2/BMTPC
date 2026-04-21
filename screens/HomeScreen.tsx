@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
 
   tabs: {
     flexDirection: "row",
-    backgroundColor: "#c8dbb3",
+    backgroundColor: "#FDC08A",
     borderRadius: 10,
   },
 
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   },
 
   activeTab: {
-    backgroundColor: "#6e875a",
+    backgroundColor: "#FA8128",
   },
 
   activeText: {

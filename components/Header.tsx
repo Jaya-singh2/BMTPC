@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   header: {
     height: 230,
     paddingTop: 40,
-    backgroundColor: "#6f8f55",
+    backgroundColor: "#FDC08A",
     alignItems: "center",
     justifyContent: "center",
     borderBottomLeftRadius: 30,
@@ -91,14 +91,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#fff",
+    color: "#000",
     textAlign: "center",
   },
 
  subtitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#fff",
+    color: "#000",
     textAlign: "center",
     textTransform: "uppercase"
   },

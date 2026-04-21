@@ -50,7 +50,7 @@ export default HazardCard;
 const styles = StyleSheet.create({
   card: {
     width: "48%",
-    backgroundColor: "#cfe3be",
+    backgroundColor: "#FDC08A",
     borderRadius: 16,
     padding: 12,
     height: 150,

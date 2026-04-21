@@ -139,7 +139,8 @@ export default function HazardMapScreen() {
         if (!selected) return;
         navigation.navigate("StateDetail", {
           stateData: selected,
-          pageName: PAGE_NAME
+          pageName: PAGE_NAME,
+          hazardId
         });
       }
     } catch {}

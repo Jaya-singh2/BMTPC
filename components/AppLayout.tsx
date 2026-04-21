@@ -59,7 +59,7 @@ export default AppLayout;
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: "#edf7e6",
+    backgroundColor: "#FFFBDC",
   },
 
   body: {

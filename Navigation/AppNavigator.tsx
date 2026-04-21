@@ -1,15 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Image,
+  StatusBar
 } from "react-native";
+
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import Ionicons from "react-native-vector-icons/Ionicons";
+
+/* ---------------- SCREENS ---------------- */
 
 import HomeScreen from "../screens/HomeScreen";
 import EarthquakeHazardScreen from "../screens/EarthquakeHazardScreen";
@@ -19,10 +24,43 @@ import ContentScreen from "../screens/ContentScreen";
 import VulnerabilityRiskScreen from "../screens/VulnerabilityRiskScreen";
 import FeedbackScreen from "../screens/FeedbackScreen";
 
-/* ---------------- STACK ---------------- */
+/* ---------------- NAVIGATORS ---------------- */
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
+
+/* =========================================================
+   🔥 SPLASH SCREEN (FULLSCREEN FIXED)
+========================================================= */
+
+function SplashScreen({ navigation }: any) {
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigation.replace("MainApp");
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <View style={styles.splashContainer}>
+
+      {/* ✅ Hide status bar completely */}
+      <StatusBar hidden={true} translucent={true} />
+
+      <Image
+        source={require("../assets/splash.png")}
+        style={styles.splashImage}
+        resizeMode="stretch" // ✅ IMPORTANT (no white space)
+      />
+    </View>
+  );
+}
+
+/* =========================================================
+   MAIN STACK
+========================================================= */
 
 function MainStack() {
   return (
@@ -38,7 +76,9 @@ function MainStack() {
   );
 }
 
-/* ---------------- TYPES ---------------- */
+/* =========================================================
+   DRAWER
+========================================================= */
 
 type MenuButtonProps = {
   label: string;
@@ -48,8 +88,6 @@ type MenuButtonProps = {
   isOpen?: boolean;
   active?: boolean;
 };
-
-/* ---------------- MENU BUTTON ---------------- */
 
 const MenuButton: React.FC<MenuButtonProps> = ({
   label,
@@ -80,8 +118,6 @@ const MenuButton: React.FC<MenuButtonProps> = ({
   );
 };
 
-/* ---------------- DRAWER ---------------- */
-
 function CustomDrawerContent(props: any) {
   const { navigation } = props;
 
@@ -90,6 +126,7 @@ function CustomDrawerContent(props: any) {
 
   return (
     <View style={styles.drawerContainer}>
+
       {/* HEADER */}
       <View style={styles.drawerHeader}>
         <Text style={styles.drawerHeaderTitle}>Menu</Text>
@@ -101,7 +138,7 @@ function CustomDrawerContent(props: any) {
 
       {/* BODY */}
       <View style={styles.drawerBody}>
-        {/* HOME (TOGGLE) */}
+
         <MenuButton
           label="Home"
           icon="home-outline"
@@ -114,17 +151,14 @@ function CustomDrawerContent(props: any) {
           }}
         />
 
-        {/* SUB MENU */}
         {homeOpen && (
           <View style={{ marginLeft: 10 }}>
+
             <MenuButton
               label="Hazards"
               icon="warning-outline"
-              active={activeItem === "Hazards"}
               onPress={() => {
-                setActiveItem("Hazards");
-
-                navigation.navigate("Home", {
+                navigation.navigate("MainApp", {
                   screen: "HomeMain",
                   params: { tab: "hazards" },
                 });
@@ -134,73 +168,96 @@ function CustomDrawerContent(props: any) {
             <MenuButton
               label="About Us"
               icon="document-text-outline"
-              active={activeItem === "About"}
               onPress={() => {
-                setActiveItem("About");
-
-                navigation.navigate("Home", {
+                navigation.navigate("MainApp", {
                   screen: "HomeMain",
                   params: { tab: "about" },
                 });
               }}
             />
+
           </View>
         )}
 
-        {/* SHARE */}
         <MenuButton
           label="Share"
           icon="share-social-outline"
-          active={activeItem === "Share"}
-          onPress={() => {
-            setActiveItem("Share");
-            Alert.alert("Share", "Share functionality not added yet.");
-          }}
+          onPress={() => Alert.alert("Share", "Not implemented")}
         />
 
-        {/* EXIT */}
         <MenuButton
           label="Exit"
           icon="log-out-outline"
-          active={activeItem === "Exit"}
-          onPress={() => {
-            setActiveItem("Exit");
-            Alert.alert("Exit", "Exit functionality not added yet.");
-          }}
+          onPress={() => Alert.alert("Exit", "Not implemented")}
         />
+
       </View>
     </View>
   );
 }
 
-/* ---------------- ROOT ---------------- */
+function DrawerNavigator() {
+  return (
+    <Drawer.Navigator
+      drawerPosition="right"
+      drawerContent={(props) => <CustomDrawerContent {...props} />}
+      screenOptions={{
+        headerShown: false,
+        swipeEnabled: false,
+        drawerType: "front",
+        overlayColor: "rgba(0,0,0,0.25)",
+        drawerStyle: {
+          width: "92%",
+          backgroundColor: "#f5f5f5",
+        },
+      }}
+    >
+      <Drawer.Screen name="MainApp" component={MainStack} />
+    </Drawer.Navigator>
+  );
+}
+
+/* =========================================================
+   ROOT STACK
+========================================================= */
+
+function RootStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Splash" component={SplashScreen} />
+      <Stack.Screen name="MainApp" component={DrawerNavigator} />
+    </Stack.Navigator>
+  );
+}
+
+/* =========================================================
+   EXPORT
+========================================================= */
 
 export default function AppNavigator() {
   return (
     <NavigationContainer>
-      <Drawer.Navigator
-        drawerPosition="right"
-        drawerContent={(props) => <CustomDrawerContent {...props} />}
-        screenOptions={{
-          headerShown: false,
-          swipeEnabled: false,
-          drawerType: "front",
-          overlayColor: "rgba(0,0,0,0.25)",
-          drawerStyle: {
-            width: "92%",
-            backgroundColor: "#f5f5f5",
-          },
-        }}
-      >
-        <Drawer.Screen name="Home" component={MainStack} />
-      </Drawer.Navigator>
+      <RootStack />
     </NavigationContainer>
   );
 }
 
-/* ---------------- STYLES ---------------- */
+/* =========================================================
+   STYLES
+========================================================= */
 
 const styles = StyleSheet.create({
+
+  splashContainer: {
+    flex: 1,
+    backgroundColor: "#88A96B",
+  },
+
+  splashImage: {
+    width: "100%",
+    height: "100%",
+  },
+
   drawerContainer: {
     flex: 1,
     backgroundColor: "#f3f3f3",
@@ -256,4 +313,5 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#222",
   },
+
 });

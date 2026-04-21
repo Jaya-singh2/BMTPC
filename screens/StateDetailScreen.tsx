@@ -41,6 +41,7 @@ export default function StateDistrictHazardScreen({
 
   const stateData: HazardState | undefined = route?.params?.stateData;
   const PAGE_NAME = route?.params?.pageName;
+  const hazardId = route?.params?.hazardId
   const [districts, setDistricts] = useState<District[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -51,9 +52,13 @@ export default function StateDistrictHazardScreen({
       setLoading(false);
       return;
     }
+    if (!hazardId) {
+      setLoading(false);
+      return;
+    }
 
     fetch(
-      `http://49.50.117.186/api/hazard-district?hazard_id=1&state_id=${stateData.state_id}`,
+      `http://49.50.117.186/api/v1/hazard-district-assembly-coordinates?hazard_id=${hazardId}&state_id=${stateData.state_id}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -62,11 +67,11 @@ export default function StateDistrictHazardScreen({
       .then(res => res.json())
       .then((json: ApiResponse) => {
         setDistricts(json?.data || []);
-        console.log(json, "states")
+        console.log(json, "states", hazardId, stateData)
       })
       .catch(() => setDistricts([]))
       .finally(() => setLoading(false));
-  }, [stateData]);
+  }, [stateData, hazardId]);
 
   /* ---------------- HANDLE DISTRICT CLICK ---------------- */
 
@@ -181,9 +186,15 @@ export default function StateDistrictHazardScreen({
    stroke-width:1;
    cursor:pointer;
  }
- /*polygon:hover {
-   fill:rgba(255,0,0,.5);
- }*/
+/*polygon {
+  fill: rgba(0, 128, 255, 0.2);   /* light blue transparent */
+  stroke: rgba(0, 0, 0, 0.2);     /* subtle border */
+  stroke-width: 1;
+  cursor: pointer;
+}
+polygon:hover {
+  fill: rgba(0, 128, 255, 0.4);   /* slightly darker on hover */
+}*/
  </style>
  </head>
 

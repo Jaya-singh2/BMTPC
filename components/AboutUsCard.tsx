@@ -43,13 +43,12 @@ const styles = StyleSheet.create({
 
   card: {
     width: "48%",
-    backgroundColor: "#cfe3be",
+    backgroundColor: "#FDC08A",
     borderRadius: 16,
     padding: 12,
-    height: 120,
+    height: 150,
     marginBottom: 12,
     position: "relative",
-
     elevation: 4,
     shadowColor: "#000",
     shadowOpacity: 0.12,
