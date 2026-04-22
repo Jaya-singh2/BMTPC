@@ -38,7 +38,7 @@ const [pdfError, setPdfError] = useState(false);
         setLoading(true);
 
         const res = await fetch(
-          "http://49.50.117.186/api/mobile-app-content"
+          "https://vai.bmtpc.netcreativemind.com/api/mobile-app-content"
         );
         const json = await res.json();
         console.log(json,'json')

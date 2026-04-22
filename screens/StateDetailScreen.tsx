@@ -58,7 +58,7 @@ export default function StateDistrictHazardScreen({
     }
 
     fetch(
-      `http://49.50.117.186/api/v1/hazard-district-assembly-coordinates?hazard_id=${hazardId}&state_id=${stateData.state_id}`,
+      `https://vai.bmtpc.netcreativemind.com/api/v1/hazard-district-assembly-coordinates?hazard_id=${hazardId}&state_id=${stateData.state_id}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -87,7 +87,7 @@ export default function StateDistrictHazardScreen({
       /* --- call POST api to get pdf_url --- */
 
       const response = await fetch(
-        "http://49.50.117.186/api/hazard-district/pdf",
+        "https://vai.bmtpc.netcreativemind.com/api/hazard-district/pdf",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

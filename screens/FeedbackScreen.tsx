@@ -96,7 +96,7 @@ export default function FeedbackScreen() {
     try {
       setLoading(true);
 
-      const url = `http://49.50.117.186/api/v1/feedback-form?name=${encodeURIComponent(
+      const url = `https://vai.bmtpc.netcreativemind.com/api/v1/feedback-form?name=${encodeURIComponent(
         name.trim()
       )}&email=${encodeURIComponent(email.trim())}&comments=${encodeURIComponent(
         comments.trim()

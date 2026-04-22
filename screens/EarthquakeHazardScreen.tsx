@@ -57,7 +57,7 @@ export default function HazardMapScreen() {
     route?.params?.mapImage ||
     "http://49.50.117.186/assets/uploads/img/hazards/1767087922_EQ_INDIA.jpg";
 
-  const API_URL = `http://49.50.117.186/api/v1/hazard-state-assembly-coordinates?hazard_id=${hazardId}`;
+  const API_URL = `https://vai.bmtpc.netcreativemind.com/api/v1/hazard-state-assembly-coordinates?hazard_id=${hazardId}`;
 
   const PAGE_NAME = route?.params?.pageName;
 
