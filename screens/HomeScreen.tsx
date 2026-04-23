@@ -48,7 +48,7 @@ const HomeScreen: React.FC = () => {
 const fetchHazards = async () => {
   try {
     const res = await fetch(
-      "http://49.50.117.186/api/hazards",
+      "https://vai.bmtpc.netcreativemind.com/api/hazards",
       {
         headers: {
           Authorization:
@@ -72,7 +72,7 @@ const fetchHazards = async () => {
   const fetchAboutData = async () => {
     try {
       const res = await fetch(
-        "http://49.50.117.186/api/mobile-app-content"
+        "https://vai.bmtpc.netcreativemind.com/api/mobile-app-content"
       );
 
       const json = await res.json();
