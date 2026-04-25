@@ -77,7 +77,6 @@ export default function HazardMapScreen() {
       setApiLoading(false);
       return;
     }
-
     fetch(API_URL, { method: "POST" })
       .then((res) => res.json())
       .then((json) => {
@@ -100,8 +99,13 @@ export default function HazardMapScreen() {
             setLocationLoading(false);
             return;
           }
-        }
-
+        }else {
+                 const auth = await Geolocation.requestAuthorization("whenInUse");
+                 if (auth !== "granted") {
+                   setLocationLoading(false);
+                   return;
+                 }
+               }
         Geolocation.getCurrentPosition(
           (pos) => {
             setUserLatLng({
