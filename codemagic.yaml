@@ -3,7 +3,7 @@ workflows:
     name: iOS Build
 
     environment:
-      xcode: latest
+      xcode: 16.4
       node: 20
 
       ios_signing:
