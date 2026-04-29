@@ -41,19 +41,21 @@ export default HazardCard;
 
 const styles = StyleSheet.create({
 
-  card: {
-    width: "48%",
-    backgroundColor: "#FDC08A",
-    borderRadius: 16,
-    padding: 12,
-    height: 150,
-    marginBottom: 12,
-    position: "relative",
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-  },
+card: {
+  width: "48%",
+  backgroundColor: "#FDC08A",
+  borderRadius: 16,
+  padding: 12,
+  minHeight: 150,
+  marginBottom: 12,
+  position: "relative",
+  justifyContent: "space-between",
+  overflow: "hidden",
+  elevation: 4,
+  shadowColor: "#000",
+  shadowOpacity: 0.12,
+  shadowRadius: 6,
+},
 
   title: {
     fontSize: 13,
@@ -69,13 +71,14 @@ const styles = StyleSheet.create({
     color: "#333",
   },
 
-  icon: {
-    width: 55,
-    height: 55,
-    alignSelf: "center",
-    marginTop: 20,
-    resizeMode: "contain",
-  },
+icon: {
+  width: 55,
+  height: 55,
+  resizeMode: "contain",
+  alignSelf: "center",
+  marginTop: "auto",
+  marginBottom: 10,
+},
 
   crack: {
     position: "absolute",

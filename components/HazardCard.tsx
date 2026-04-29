@@ -32,9 +32,6 @@ const HazardCard: React.FC<Props> = ({
            />:
           <Image source={icon} style={styles.icon} />
           }
-
-
-
       <Image
         source={require("../assets/images/hazards/crack.png")}
         style={styles.crack}
@@ -48,20 +45,22 @@ export default HazardCard;
 /* ---------------- STYLES ---------------- */
 
 const styles = StyleSheet.create({
-  card: {
-    width: "48%",
-    backgroundColor: "#FDC08A",
-    borderRadius: 16,
-    padding: 12,
-    height: 150,
-    marginBottom: 12,
-    position: "relative",
+card: {
+  width: "48%",
+  backgroundColor: "#FDC08A",
+  borderRadius: 16,
+  padding: 12,
+  minHeight: 150,
+  marginBottom: 12,
+  position: "relative",
+  justifyContent: "space-between",
+  overflow: "hidden",
+  elevation: 4,
+  shadowColor: "#000",
+  shadowOpacity: 0.12,
+  shadowRadius: 6,
+},
 
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-  },
 
   title: {
     fontSize: 14,
@@ -76,14 +75,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
-
-  icon: {
-    width: 60,
-    height: 60,
-    alignSelf: "center",
-    marginTop: 20,
-    resizeMode: "contain",
-  },
+icon: {
+  width: 55,
+  height: 55,
+  resizeMode: "contain",
+  alignSelf: "center",
+  marginTop: "auto",
+  marginBottom: 10,
+},
 
   crack: {
     position: "absolute",

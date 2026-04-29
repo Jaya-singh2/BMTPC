@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
 
   drawerHeader: {
     height: 180,
-    backgroundColor: "#88A96B",
+    backgroundColor: "#FDC08A",
     paddingHorizontal: 24,
     paddingTop: 60,
     flexDirection: "row",
