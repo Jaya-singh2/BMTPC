@@ -6,6 +6,9 @@ workflows:
       xcode: 26.1
       node: 20
 
+      vars:
+        USE_HERMES: "false"
+
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.bmtpc.iosapp
