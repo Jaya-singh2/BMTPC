@@ -26,8 +26,8 @@ workflows:
 
       - name: Clean iOS build
         script: |
-          cd ios
-          xcodebuild clean
+           rm -rf ios/build
+           rm -rf ~/Library/Developer/Xcode/DerivedData/*
 
       - name: Set up signing
         script: |
