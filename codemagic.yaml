@@ -8,6 +8,7 @@ workflows:
 
       vars:
         USE_HERMES: "false"
+        RCT_NEW_ARCH_ENABLED: "0"
 
       ios_signing:
         distribution_type: app_store
@@ -28,7 +29,7 @@ workflows:
           rm -rf Podfile.lock
           rm -rf build
           pod deintegrate
-          pod install --repo-update
+          RCT_NEW_ARCH_ENABLED=0 pod install --repo-update
 
       - name: Clean iOS build
         script: |
