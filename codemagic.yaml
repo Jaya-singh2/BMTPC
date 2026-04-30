@@ -6,10 +6,6 @@ workflows:
       xcode: 16.4
       node: 20
 
-      vars:
-        USE_HERMES: "false"
-        RCT_NEW_ARCH_ENABLED: "0"
-
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.bmtpc.iosapp
@@ -18,8 +14,10 @@ workflows:
       app_store_connect: codemagic
 
     scripts:
+
       - name: Install dependencies
         script: |
+          rm -rf node_modules
           npm install
 
       - name: Install CocoaPods
@@ -29,12 +27,12 @@ workflows:
           rm -rf Podfile.lock
           rm -rf build
           pod deintegrate
-          RCT_NEW_ARCH_ENABLED=0 pod install --repo-update
+          pod install --repo-update
 
       - name: Clean iOS build
         script: |
-           rm -rf ios/build
-           rm -rf ~/Library/Developer/Xcode/DerivedData/*
+          rm -rf ios/build
+          rm -rf ~/Library/Developer/Xcode/DerivedData/*
 
       - name: Set up signing
         script: |
