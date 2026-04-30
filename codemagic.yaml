@@ -21,8 +21,11 @@ workflows:
       - name: Install CocoaPods
         script: |
           cd ios
-          rm -rf Pods Podfile.lock
-          pod install
+          rm -rf Pods
+          rm -rf Podfile.lock
+          rm -rf build
+          pod deintegrate
+          pod install --repo-update
 
       - name: Clean iOS build
         script: |
