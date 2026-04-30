@@ -3,7 +3,7 @@ workflows:
     name: iOS Build
 
     environment:
-      xcode: 26.1
+      xcode: 16.4
       node: 20
 
       vars:
