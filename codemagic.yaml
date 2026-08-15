@@ -33,8 +33,13 @@ workflows:
           pod deintegrate
           pod install --repo-update --verbose
 
-          echo "===== GENERATED FILES ====="
-          find build -type f | head -100 || true
+      - name: Verify iOS files
+        script: |
+          echo "===== IOS FOLDER ====="
+          ls -la ios
+
+          echo "===== WORKSPACES ====="
+          find ios -name "*.xcworkspace"
 
       - name: Set up signing
         script: |
@@ -46,7 +51,7 @@ workflows:
           export RCT_NEW_ARCH_ENABLED=0
 
           xcode-project build-ipa \
-            --workspace ios/TestApp.xcworkspace \
+            --project ios/TestApp.xcodeproj \
             --scheme TestApp \
             --verbose
 
