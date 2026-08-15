@@ -15,49 +15,113 @@ workflows:
 
     scripts:
 
+      # -----------------------------------------
+      # Install Node dependencies
+      # -----------------------------------------
       - name: Install dependencies
         script: |
+          set -e
+
+          echo "===== NODE VERSION ====="
+          node --version
+
+          echo "===== NPM VERSION ====="
+          npm --version
+
+          echo "===== INSTALLING DEPENDENCIES ====="
+
           rm -rf node_modules
+
           npm install
 
+      # -----------------------------------------
+      # Install CocoaPods
+      # -----------------------------------------
       - name: Install CocoaPods
         script: |
+          set -e
+
+          echo "===== NODE ====="
+          which node
+          node --version
+
+          echo "===== ENABLE REACT NATIVE NEW ARCHITECTURE ====="
           export NODE_BINARY=$(which node)
-          export RCT_NEW_ARCH_ENABLED=0
+          export RCT_NEW_ARCH_ENABLED=1
+
+          echo "RCT_NEW_ARCH_ENABLED=$RCT_NEW_ARCH_ENABLED"
+          echo "NODE_BINARY=$NODE_BINARY"
 
           cd ios
+
+          echo "===== CLEAN PODS ====="
 
           rm -rf Pods
           rm -f Podfile.lock
 
-          pod deintegrate
+          pod deintegrate || true
+
+          echo "===== INSTALLING PODS ====="
+
           pod install --repo-update --verbose
 
+          echo "===== GENERATED WORKSPACE ====="
+
+          find . -name "*.xcworkspace" -print
+
+          echo "===== POD INSTALL COMPLETED ====="
+
+      # -----------------------------------------
+      # Verify iOS files
+      # -----------------------------------------
       - name: Verify iOS files
         script: |
-          echo "===== IOS FOLDER ====="
+          set -e
+
+          echo "===== IOS DIRECTORY ====="
+
           ls -la ios
 
-          echo "===== WORKSPACES ====="
-          find ios -name "*.xcworkspace"
+          echo "===== WORKSPACE ====="
 
+          ls -la ios/TestApp.xcworkspace
+
+          echo "===== PROJECT ====="
+
+          ls -la ios/TestApp.xcodeproj
+
+      # -----------------------------------------
+      # Configure signing
+      # -----------------------------------------
       - name: Set up signing
         script: |
+          set -e
+
           xcode-project use-profiles
 
+      # -----------------------------------------
+      # Build IPA
+      # -----------------------------------------
       - name: Build iOS IPA
         script: |
-          export NODE_BINARY=$(which node)
-          export RCT_NEW_ARCH_ENABLED=0
+          set -e
+
+          echo "===== BUILDING IPA ====="
 
           xcode-project build-ipa \
-            --project ios/TestApp.xcodeproj \
+            --workspace ios/TestApp.xcworkspace \
             --scheme TestApp \
             --verbose
 
+    # -----------------------------------------
+    # Build artifacts
+    # -----------------------------------------
     artifacts:
       - build/ios/ipa/*.ipa
 
+    # -----------------------------------------
+    # Publish to TestFlight
+    # -----------------------------------------
     publishing:
       app_store_connect:
         auth: integration
