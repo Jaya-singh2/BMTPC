@@ -36,7 +36,7 @@ target 'TestApp' do
   
         config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.1'
 
-        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'gnu++17'
+        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'gnu++20'
 
         config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
           '$(inherited)',
