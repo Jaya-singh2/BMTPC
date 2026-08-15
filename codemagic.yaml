@@ -22,17 +22,19 @@ workflows:
 
       - name: Install CocoaPods
         script: |
-          cd ios
-          rm -rf Pods
-          rm -rf Podfile.lock
-          rm -rf build
-          pod deintegrate
-          pod install --repo-update
+          export NODE_BINARY=$(which node)
+          export RCT_NEW_ARCH_ENABLED=0
 
-      - name: Clean iOS build
-        script: |
-          rm -rf ios/build
-          rm -rf ~/Library/Developer/Xcode/DerivedData/*
+          cd ios
+
+          rm -rf Pods
+          rm -f Podfile.lock
+
+          pod deintegrate
+          pod install --repo-update --verbose
+
+          echo "===== GENERATED FILES ====="
+          find build -type f | head -100 || true
 
       - name: Set up signing
         script: |
@@ -40,6 +42,9 @@ workflows:
 
       - name: Build iOS IPA
         script: |
+          export NODE_BINARY=$(which node)
+          export RCT_NEW_ARCH_ENABLED=0
+
           xcode-project build-ipa \
             --workspace ios/TestApp.xcworkspace \
             --scheme TestApp \
