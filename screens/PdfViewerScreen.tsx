@@ -7,6 +7,7 @@ import {
   Text,
   Linking,
   Alert,
+  Pressable
 } from "react-native";
 import Pdf from "react-native-pdf";
 import AppLayout from "../components/AppLayout";
@@ -14,8 +15,9 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import ReactNativeBlobUtil from 'react-native-blob-util';
 
 export default function PdfViewerScreen({ route, navigation }: any) {
-  const { pdfUrl, title , PAGE_NAME} = route.params;
+  const { pdfUrl, title , PAGE_NAME, hazardId} = route.params;
   const [loading, setLoading] = useState(true);
+  console.log(hazardId, 'id')
 
 const downloadPdf = async () => {
   try {
@@ -49,34 +51,88 @@ const downloadPdf = async () => {
   }
 };
 
+const openPdf = async() => {
+try {
+      if (!hazardId) {
+        Alert.alert("Error", "Invalid hazard id");
+        return;
+      }
+
+      /* --- call POST api to get pdf_url --- */
+
+      const response = await fetch(
+        "https://vai.bmtpc.netcreativemind.com/api/v1/hazards/risk-pdf",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            hazard_id: hazardId,
+          }),
+        }
+      );
+
+      const json = await response.json();
+      console.log(json,"risk table")
+      if (!json?.data[0].risk_pdf) {
+        Alert.alert("Error", "PDF not available");
+        return;
+      }
+
+      /* --- navigate INSIDE app --- */
+      navigation.navigate("PdfViewerScreen", {
+        pdfUrl: json?.data[0].risk_pdf,
+        title: "INDIA",
+        PAGE_NAME,
+        hazardId,
+      });
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to open PDF");
+    }
+};
+
+
 
   return (
-    <AppLayout
-      title={PAGE_NAME}
-      subtitle={title || "District Report"}
-      showBack
-      onBack={() => navigation.goBack()}
-    >
-      <View style={styles.container}>
+   <AppLayout
+     title={PAGE_NAME}
+     subtitle={title || "District Report"}
+     showBack
+     onBack={() => navigation.goBack()}
+   >
+     <View style={styles.container}>
 
-        {/* Small floating download icon */}
-        <TouchableOpacity style={styles.iconBtn} onPress={downloadPdf}>
-         <Icon name="download" size={18} color="#fff" />
-        </TouchableOpacity>
+       {/* Floating icons */}
+       <View style={styles.iconContainer}>
 
-        {/* Loader */}
-        {loading && (
-          <View style={styles.loader}>
-            <ActivityIndicator size="large" color="#6f8f55" />
-          </View>
-        )}
 
-        {/* PDF Viewer */}
+         {/* Download Icon */}
+         <TouchableOpacity style={[styles.iconBtn, { marginRight: 10 }]} onPress={downloadPdf}>
+           <Icon name="download" size={18} color="#fff" />
+         </TouchableOpacity>
+
+             {/* Info Icon */}
+                  <TouchableOpacity
+                    style={styles.iconBtn}
+                    onPress={openPdf}
+                  >
+                    <Icon name="info-outline" size={18} color="#fff" />
+                  </TouchableOpacity>
+       </View>
+
+       {/* Loader */}
+       {loading && (
+         <View style={styles.loader}>
+           <ActivityIndicator size="large" color="#6f8f55" />
+         </View>
+       )}
+
+       {/* PDF Viewer */}
        <Pdf
          source={{
            uri: encodeURI(pdfUrl),
            cache: true,
-           method: 'GET',
+           method: "GET",
          }}
          trustAllCerts={false}
          style={styles.pdf}
@@ -86,8 +142,8 @@ const downloadPdf = async () => {
            Alert.alert("Error", "Failed to load PDF");
          }}
        />
-      </View>
-    </AppLayout>
+     </View>
+   </AppLayout>
   );
 }
 
@@ -109,21 +165,23 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     zIndex: 10,
   },
-
-  /* ---- Small round download icon ---- */
-  iconBtn: {
+  iconContainer: {
     position: "absolute",
-    top: 12,
-    right: 12,
-    backgroundColor: "#6f8f55",
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 10,
+    top: 15,
+    right: 15,
+    flexDirection: "row",
+    zIndex: 1000,
   },
-
+  /* ---- Small round download icon ---- */
+   iconBtn: {
+     width: 40,
+     height: 40,
+     borderRadius: 20,
+     backgroundColor: "#FDC08A",
+     justifyContent: "center",
+     alignItems: "center",
+     elevation: 5,
+   },
   icon: {
     fontSize: 18,
   },

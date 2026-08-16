@@ -1,7 +1,6 @@
 import React from "react";
 import {
   View,
-  Text,
   StyleSheet,
   Pressable,
   Image,
@@ -10,50 +9,75 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 
 interface HeaderProps {
-  title: string;
+  title?: string;
   showBack?: boolean;
   showLogo?: boolean;
+  rightComponent?: React.ReactNode;
 }
 
 const Header: React.FC<HeaderProps> = ({
   title,
-  showBack = true,
-  showLogo = false,
-  subtitle
+  showBack = false,
+  showLogo = true,
+  rightComponent,
 }) => {
   const navigation: any = useNavigation();
 
   return (
-    <View style={styles.header}>
-      {showBack && (
-        <Pressable
-          style={styles.leftIcon}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </Pressable>
-      )}
+   <View style={styles.header}>
 
-      <Pressable
-        style={styles.rightIcon}
-        onPress={() => navigation.toggleDrawer()}
-      >
-        <Ionicons name="menu" size={24} color="#fff" />
-      </Pressable>
+     {/* LOGOS */}
+     {showLogo && (
+       <View style={styles.logoRow}>
 
-      <View style={styles.centerContent}>
-        {/* {showLogo && (
-          <Image
-            source={require("../assets/images/logo.png")}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-        )} */}
+         <Image
+           source={require("../assets/images/vai-logo.png")}
+           style={styles.vaiLogo}
+           resizeMode="contain"
+         />
 
-        <Text style={styles.title}>{title}</Text>
-        {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
-      </View>
-    </View>
+         <Image
+           source={require("../assets/images/mohua-logo.png")}
+           style={styles.mohuaLogo}
+           resizeMode="contain"
+         />
+
+         <Image
+           source={require("../assets/images/bmtpc-logo.png")}
+           style={styles.bmtpcLogo}
+           resizeMode="contain"
+         />
+
+       </View>
+     )}
+
+     {/* BACK */}
+     {showBack && (
+       <Pressable
+         style={styles.backButton}
+         onPress={() => navigation.goBack()}
+       >
+         <Ionicons
+           name="arrow-back"
+           size={25}
+           color="#fff"
+         />
+       </Pressable>
+     )}
+
+     {/* MENU */}
+     <Pressable
+       style={styles.menuButton}
+       onPress={() => navigation.toggleDrawer()}
+     >
+       <Ionicons
+         name="menu"
+         size={24}
+         color="#fff"
+       />
+     </Pressable>
+
+   </View>
   );
 };
 
@@ -63,55 +87,87 @@ export default Header;
 
 const styles = StyleSheet.create({
   header: {
-    height: 230,
-    paddingTop: 40,
+    height: 220,
     backgroundColor: "#FDC08A",
-    alignItems: "center",
-    justifyContent: "center",
+
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
+
     elevation: 6,
+
     shadowColor: "#000",
     shadowOpacity: 0.15,
     shadowRadius: 8,
+
+    position: "relative",
   },
 
-  centerContent: {
-    alignItems: "center",
-    marginTop: -50,
-  },
+  // Three logos
+  logoRow: {
+    position: "absolute",
 
-  logo: {
-    width: 60,
+    top: 60,
+    left: 15,
+    right: 15,
+
     height: 60,
-    marginBottom: 6,
+
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
 
-
-  title: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#000",
-    textAlign: "center",
+  vaiLogo: {
+    width: 70,
+    height: 55,
   },
 
- subtitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#000",
-    textAlign: "center",
-    textTransform: "uppercase"
+  mohuaLogo: {
+    width: 125,
+    height: 55,
   },
 
-  leftIcon: {
+  bmtpcLogo: {
+    width: 70,
+    height: 55,
+  },
+
+  // Back arrow
+  backButton: {
     position: "absolute",
-    left: 16,
-    top: 48,
+
+    left: 14,
+    top: 120,
+
+    width: 35,
+    height: 35,
+
+    alignItems: "center",
+    justifyContent: "center",
+
+    zIndex: 20,
   },
 
-  rightIcon: {
+  // Hamburger BELOW BMTPC
+  menuButton: {
     position: "absolute",
-    right: 16,
-    top: 48,
+
+    right: 14,
+    top: 120,
+
+
+    width: 35,
+    height: 35,
+
+    alignItems: "center",
+    justifyContent: "center",
+
+    zIndex: 20,
+  },
+
+  rightComponent: {
+    position: "absolute",
+    right: 20,
+    top: 140,
   },
 });

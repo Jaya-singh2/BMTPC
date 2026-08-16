@@ -15,24 +15,19 @@ interface Props {
 
 const HazardCard: React.FC<Props> = ({ title, icon, onPress }) => {
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.card,
-        pressed && { opacity: 0.8 },
-      ]}
-    >
-      <Text style={styles.title}>{title}</Text>
+     <Pressable style={styles.card} onPress={onPress}>
+       <Text style={styles.title}>{title}</Text>
 
-      <Text style={styles.arrow}> → </Text>
+       <View style={styles.iconContainer}>
+       {/*<Text style={styles.arrow}> → </Text>*/}
+           <Image source={{uri : icon}} style={styles.icon} />
+       </View>
 
-      <Image source={{ uri: icon }} style={styles.icon} />
-
-      <Image
-        source={require("../assets/images/hazards/crack.png")}
-        style={styles.crack}
-      />
-    </Pressable>
+       <Image
+         source={require("../assets/images/hazards/crack.png")}
+         style={styles.crack}
+       />
+     </Pressable>
   );
 };
 
@@ -57,8 +52,9 @@ card: {
   shadowRadius: 6,
 },
 
+
   title: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "600",
     color: "#1a1a1a",
   },
@@ -72,12 +68,15 @@ card: {
   },
 
 icon: {
-  width: 55,
-  height: 55,
+  width: 70,
+  height: 70,
   resizeMode: "contain",
-  alignSelf: "center",
-  marginTop: "auto",
-  marginBottom: 10,
+},
+
+iconContainer: {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
 },
 
   crack: {

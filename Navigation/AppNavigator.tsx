@@ -20,6 +20,7 @@ import HomeScreen from "../screens/HomeScreen";
 import EarthquakeHazardScreen from "../screens/EarthquakeHazardScreen";
 import StateDetailScreen from "../screens/StateDetailScreen";
 import PdfViewerScreen from "../screens/PdfViewerScreen";
+import LocalPdfViewerScreen from "../screens/LocalPdfViewerScreen";
 import ContentScreen from "../screens/ContentScreen";
 import VulnerabilityRiskScreen from "../screens/VulnerabilityRiskScreen";
 import FeedbackScreen from "../screens/FeedbackScreen";
@@ -69,6 +70,7 @@ function MainStack() {
       <Stack.Screen name="EarthquakeHazardScreen" component={EarthquakeHazardScreen} />
       <Stack.Screen name="StateDetail" component={StateDetailScreen} />
       <Stack.Screen name="PdfViewerScreen" component={PdfViewerScreen} />
+      <Stack.Screen name="LocalPdfViewerScreen" component={LocalPdfViewerScreen} />
       <Stack.Screen name="ContentScreen" component={ContentScreen} />
       <Stack.Screen name="VulnerabilityRiskScreen" component={VulnerabilityRiskScreen} />
       <Stack.Screen name="FeedbackScreen" component={FeedbackScreen} />

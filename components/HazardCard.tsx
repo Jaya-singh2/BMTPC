@@ -20,23 +20,25 @@ const HazardCard: React.FC<Props> = ({
   onPress,
 }) => {
   return (
-    <Pressable style={styles.card} onPress={onPress}>
-      <Text style={styles.title}>{title}</Text>
+ <Pressable style={styles.card} onPress={onPress}>
+   <Text style={styles.title}>{title}</Text>
 
-      <Text style={styles.arrow}>→</Text>
+   <View style={styles.iconContainer}>
+     {title === "Vulnerability Risk Table" ? (
+       <Image
+         source={require("../assets/images/hazards/risk.png")}
+         style={styles.icon}
+       />
+     ) : (
+        <Image source={{uri : icon}} style={styles.icon} />
+     )}
+   </View>
 
-      {title==="Vulnerability Risk Table"?
-           <Image
-              source={require("../assets/images/hazards/risk.png")}
-              style={styles.icon}
-           />:
-          <Image source={icon} style={styles.icon} />
-          }
-      <Image
-        source={require("../assets/images/hazards/crack.png")}
-        style={styles.crack}
-      />
-    </Pressable>
+   <Image
+     source={require("../assets/images/hazards/crack.png")}
+     style={styles.crack}
+   />
+ </Pressable>
   );
 };
 
@@ -75,13 +77,17 @@ card: {
     fontSize: 16,
     color: "#333",
   },
+
 icon: {
-  width: 55,
-  height: 55,
+  width: 70,
+  height: 70,
   resizeMode: "contain",
-  alignSelf: "center",
-  marginTop: "auto",
-  marginBottom: 10,
+},
+
+iconContainer: {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
 },
 
   crack: {

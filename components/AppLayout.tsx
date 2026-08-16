@@ -15,8 +15,8 @@ interface Props {
   showBack?: boolean;
   showLogo?: boolean;
   subtitle?: string;
-
   scrollable?: boolean;
+  rightComponent?: React.ReactNode;
 }
 
 const AppLayout: React.FC<Props> = ({
@@ -25,9 +25,11 @@ const AppLayout: React.FC<Props> = ({
   activeTab,
   onTabChange,
   showBack = true,
-  showLogo = false,
+  showLogo = true,
   subtitle,
   scrollable = true,
+  rightComponent
+
 }) => {
   return (
     <View style={styles.root}>
@@ -36,6 +38,7 @@ const AppLayout: React.FC<Props> = ({
         showBack={showBack}
         showLogo={showLogo}
         subtitle={subtitle}
+        rightComponent={rightComponent}
       />
 
       <View style={styles.body}>

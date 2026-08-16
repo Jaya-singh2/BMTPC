@@ -63,7 +63,20 @@ const fetchHazards = async () => {
    icon: hazards[index]?.icon
  }));
 
- setHazardsData(dataWithIcons);
+const dataM = Array.isArray(json?.data)
+  ? json.data.map(item => {
+      const { app_icon, ...rest } = item || {};
+
+      return {
+        ...rest,
+        icon: app_icon || "",
+      };
+    })
+  : [];
+console.log(dataM)
+setHazardsData(dataM);
+
+
   } catch (error) {
     console.log("Hazards API error", error);
   }
@@ -150,11 +163,11 @@ const fetchHazards = async () => {
           style={{ flex: 1 }}
           contentContainerStyle={styles.content}
         >
-          <Text style={styles.heading}>
+          {/*<Text style={styles.heading}>
             {activeTab === "hazards"
               ? "Hazards"
               : "About Us"}
-          </Text>
+          </Text>*/}
 
           <View style={styles.grid}>
             {currentData.map((item) => (
@@ -182,7 +195,7 @@ const fetchHazards = async () => {
             <YoutubePlayer
               height={220}
               play={playing}
-              videoId={"JW1tsE0lf2I"}
+              videoId={"w3osC0K3c54"}
             />
           </View>
 

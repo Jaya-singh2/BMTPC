@@ -42,32 +42,37 @@ export default function FeedbackScreen() {
     const trimmedPhone = phone.trim();
     const trimmedComments = comments.trim();
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^[0-9]{10}$/;
+    const emailRegex = /^[a-zA-Z][a-zA-Z0-9._]*@[a-zA-Z]+\.[a-zA-Z]{2,}$/;
+    const phoneRegex = /^[7][0-9]{9}$/;
 
-    if (!trimmedName) {
-      newErrors.name = "Please enter your name";
-      valid = false;
-    } else if (trimmedName.length < 3) {
-      newErrors.name = "Name must be at least 3 characters";
-      valid = false;
-    }
+const nameRegex = /^[A-Za-z ]+$/;
 
-    if (!trimmedEmail) {
-      newErrors.email = "Please enter your email";
-      valid = false;
-    } else if (!emailRegex.test(trimmedEmail)) {
-      newErrors.email = "Please enter a valid email address";
-      valid = false;
-    }
+if (!trimmedName) {
+  newErrors.name = "Please enter your name";
+  valid = false;
+} else if (!nameRegex.test(trimmedName)) {
+  newErrors.name = "Name should contain only letters";
+  valid = false;
+} else if (trimmedName.length < 3) {
+  newErrors.name = "Name must be at least 3 characters";
+  valid = false;
+}
 
-    if (!trimmedPhone) {
-      newErrors.phone = "Please enter your phone number";
-      valid = false;
-    } else if (!phoneRegex.test(trimmedPhone)) {
-      newErrors.phone = "Phone number must be 10 digits";
-      valid = false;
-    }
+if (!trimmedEmail) {
+  newErrors.email = "Please enter your email";
+  valid = false;
+} else if (!emailRegex.test(trimmedEmail)) {
+  newErrors.email = "Enter a valid email (must start with a letter)";
+  valid = false;
+}
+
+if (!trimmedPhone) {
+  newErrors.phone = "Please enter your phone number";
+  valid = false;
+} else if (!phoneRegex.test(trimmedPhone)) {
+  newErrors.phone = "Phone must start with 7 and be 10 digits";
+  valid = false;
+}
 
     if (!trimmedComments) {
       newErrors.comments = "Please enter your comments";
@@ -144,10 +149,10 @@ export default function FeedbackScreen() {
         <TextInput
           style={[styles.input, errors.name ? styles.inputError : null]}
           value={name}
-          onChangeText={(text) => {
-            setName(text);
-            clearFieldError("name");
-          }}
+      onChangeText={(text) => {
+        setName(text);
+        clearFieldError("name");
+      }}
           placeholder="Enter your name"
         />
         {errors.name ? <Text style={styles.errorText}>{errors.name}</Text> : null}
@@ -156,10 +161,10 @@ export default function FeedbackScreen() {
         <TextInput
           style={[styles.input, errors.email ? styles.inputError : null]}
           value={email}
-          onChangeText={(text) => {
-            setEmail(text);
-            clearFieldError("email");
-          }}
+         onChangeText={(text) => {
+           setEmail(text.replace(/\s/g, ""));
+           clearFieldError("email");
+         }}
           keyboardType="email-address"
           autoCapitalize="none"
           placeholder="Enter your email"

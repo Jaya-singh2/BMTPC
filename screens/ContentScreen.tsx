@@ -43,9 +43,9 @@ const [pdfError, setPdfError] = useState(false);
         const json = await res.json();
         console.log(json,'json')
         const found = json?.data?.find(
-          (item: any) => item.page_name === pageName
+          (item: any) => item.title === pageName
         );
-
+       console.log(found,'found', pageName)
         if (!isMounted) return;
 
         if (found) {
@@ -205,6 +205,7 @@ const [pdfError, setPdfError] = useState(false);
             {content ? (
               <View style={styles.webviewWrapper}>
                 <WebView
+                  key={htmlContent}
                   originWhitelist={["*"]}
                   source={{ html: htmlContent }}
                   style={{ height: 400 }} // dynamic feel without blank space

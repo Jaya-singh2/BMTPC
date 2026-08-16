@@ -4,6 +4,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  Text
 } from "react-native";
 import { WebView } from "react-native-webview";
 import AppLayout from "../components/AppLayout";
@@ -43,6 +44,7 @@ export default function StateDistrictHazardScreen({
   const PAGE_NAME = route?.params?.pageName;
   const hazardId = route?.params?.hazardId
   const [districts, setDistricts] = useState<District[]>([]);
+  const [apiStatus, setApiStatus] = useState(true);
   const [loading, setLoading] = useState(true);
 
   /* ---------------- FETCH DISTRICTS ---------------- */
@@ -66,6 +68,7 @@ export default function StateDistrictHazardScreen({
     )
       .then(res => res.json())
       .then((json: ApiResponse) => {
+          setApiStatus(json.status);
         setDistricts(json?.data || []);
         console.log(json, "states", hazardId, stateData)
       })
@@ -111,7 +114,8 @@ export default function StateDistrictHazardScreen({
       navigation.navigate("PdfViewerScreen", {
         pdfUrl: json.pdf_url,
         title: json.district_name || "District Report",
-        PAGE_NAME
+        PAGE_NAME,
+        hazardId
 
       });
     } catch (error) {
@@ -374,17 +378,38 @@ polygon:hover {
       showBack
       showLogo
     >
-      <View style={styles.container}>
-        <WebView
-          ref={webViewRef}
-          source={{ html }}
-          originWhitelist={["*"]}
-          javaScriptEnabled
-          domStorageEnabled
-          onMessage={onMessage}
-          style={{ flex: 1 }}
-        />
-      </View>
+
+<View style={styles.container}>
+  {apiStatus  ? (
+    <WebView
+      ref={webViewRef}
+      source={{ html }}
+      originWhitelist={["*"]}
+      javaScriptEnabled
+      domStorageEnabled
+      onMessage={onMessage}
+      style={{ flex: 1 }}
+    />
+  ) : (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 18,
+          fontWeight: "600",
+          color: "#666",
+        }}
+      >
+        Data Not Found
+      </Text>
+    </View>
+  )}
+</View>
     </AppLayout>
   );
 }

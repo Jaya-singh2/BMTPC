@@ -1,52 +1,58 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   View,
+  Text,
   StyleSheet,
   ActivityIndicator,
   PermissionsAndroid,
   Platform,
+  Alert,
+  Pressable
 } from "react-native";
 import { WebView } from "react-native-webview";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import Icon from "react-native-vector-icons/MaterialIcons";
 import Geolocation from "react-native-geolocation-service";
 import AppLayout from "../components/AppLayout";
 
 const MAP_CONFIG = {
   "Earthquake Hazard": {
     minLat: 6.4627,
-    maxLat: 37.0841,
+    maxLat: 37.4841,
     minLng: 68.1097,
     maxLng: 97.3956,
   },
 
   "Wind Hazard": {
     minLat: 6.4627,
-     maxLat: 39.4990,
-     minLng: 68.1097,
-      maxLng: 94.0956
+     maxLat: 40.2000,
+     minLng: 67.6000,
+      maxLng: 94.4000
   },
 
   "Flood Hazard": {
    minLat: 6.4627,
-       maxLat: 39.1990,
-       minLng: 68.1097,
+       maxLat: 39.5990,
+       minLng: 67.9000,
         maxLng: 91.0956
   },
 
-  "Landslide Hazard": {
+  "Landslide Incidence Map": {
       minLat: 6.4627,
-     maxLat: 38.0000,
-     minLng: 68.1097,
+     maxLat: 38.7200,
+     minLng: 67.6000,
       maxLng: 94.0056
   },
 
-  "Thunderstorm Hazard": {
+  "Thunderstorm Incidence Map": {
    minLat: 6.4627,
-       maxLat: 39.8000,
-       minLng: 68.1097,
+       maxLat: 40.4000,
+       minLng: 68.2000,
         maxLng: 94.0056
 }
 };
+
+
 
 export default function HazardMapScreen() {
   const navigation = useNavigation<any>();
@@ -60,6 +66,13 @@ export default function HazardMapScreen() {
   const API_URL = `https://vai.bmtpc.netcreativemind.com/api/v1/hazard-state-assembly-coordinates?hazard_id=${hazardId}`;
 
   const PAGE_NAME = route?.params?.pageName;
+  const PDF_MAP = {
+    "Earthquake Hazard":  "bundle-assets://pdfs/Earthquakes.pdf",
+    "Wind Hazard": "bundle-assets://pdfs/Wind.pdf",
+    "Flood Hazard": "bundle-assets://pdfs/Floods.pdf",
+    "Landslide Incidence Map": "bundle-assets://pdfs/Landslides.pdf",
+    "Thunderstorm Incidence Map": "bundle-assets://pdfs/Thunderstorm.pdf",
+  };
 
   const webViewRef = useRef<WebView>(null);
 
@@ -69,6 +82,8 @@ export default function HazardMapScreen() {
   const [mapReady, setMapReady] = useState(false);
 
   const [userLatLng, setUserLatLng] = useState<any>(null);
+  const [userState, setUserState] = useState<any>(null);
+  const [zoneInfo, setZoneInfo] = useState<any>(null);
 
   /* ================= FETCH API ================= */
 
@@ -106,17 +121,73 @@ export default function HazardMapScreen() {
                    return;
                  }
                }
-        Geolocation.getCurrentPosition(
-          (pos) => {
-            setUserLatLng({
-              latitude: pos.coords.latitude,
-              longitude: pos.coords.longitude,
-            });
-            setLocationLoading(false);
-          },
-          () => setLocationLoading(false),
-          { enableHighAccuracy: true }
-        );
+ Geolocation.getCurrentPosition(
+   async (pos) => {
+       console.log("Inside getCurrentPosition");
+
+        // Test location
+        //const latitude = 23.009472825540964;
+       // const longitude = 71.9179438909462;
+
+       const latitude = pos.coords.latitude;
+       const longitude = pos.coords.longitude;
+
+        console.log("Latitude:", latitude);
+        console.log("Longitude:", longitude);
+
+     setUserLatLng({
+       latitude,
+       longitude,
+     });
+
+     try {
+          console.log("Calling Nominatim...");
+       const response = await fetch(
+         `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
+         {
+           headers: {
+             "User-Agent": "HazardApp/1.0",
+           },
+         }
+       );
+
+       const json = await response.json();
+        console.log(json)
+       const state =
+         json.address?.state ||
+         json.address?.state_district ||
+             json.address?.city ||
+         "";
+
+       let normalizedState = state;
+
+       if (
+         normalizedState === "New Delhi" ||
+         normalizedState === "National Capital Territory of Delhi" ||
+         normalizedState === "NCT of Delhi" ||
+         normalizedState === "Delhi Division"
+       ) {
+         normalizedState = "Delhi";
+       }
+
+       setUserState(normalizedState);
+
+       console.log("Detected State:", normalizedState);
+
+     } catch (e) {
+       console.log(e);
+     }
+
+     setLocationLoading(false);
+   },
+   (error) => {
+     console.log(error);
+     setLocationLoading(false);
+   },
+   {
+     enableHighAccuracy: true,
+   }
+ );
       } catch {
         setLocationLoading(false);
       }
@@ -125,12 +196,98 @@ export default function HazardMapScreen() {
     getLocation();
   }, []);
 
+
+
+ {/*const openPdf = async() => {
+try {
+      if (!hazardId) {
+        Alert.alert("Error", "Invalid hazard id");
+        return;
+      }
+
+      const response = await fetch(
+        "https://vai.bmtpc.netcreativemind.com/api/v1/hazards/risk-pdf",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+                    hazard_id: hazardId,
+              }),
+        }
+      );
+
+      const json = await response.json();
+      console.log(json,"risk table",hazardId)
+      if (!json?.data[0].risk_pdf) {
+        Alert.alert("Error", "PDF not available");
+        return;
+      }
+
+      navigation.navigate("PdfViewerScreen", {
+        pdfUrl: json?.data[0].risk_pdf,
+        title: "INDIA",
+        PAGE_NAME,
+        hazardId:hazardId
+      });
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to open PDF");
+    }
+}; */}
+
   /* ================= MESSAGE ================= */
 
-  const onMessage = (event: any) => {
+  const onMessage = async(event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
+      if (data.type === "DOT_DEBUG") {
+        console.log("DOT DEBUG:", data);
+        return;
+      }
+if (data.type === "USER_LOCATION") {
+    try {
 
+        if (!userLatLng) {
+            console.log("User location not available");
+            return;
+        }
+
+     const response = await fetch(
+     `https://vai.bmtpc.netcreativemind.com/api/v1/zone-coordonates?hazard_id=${hazardId}&latitude=${userLatLng.latitude}&longitude=${userLatLng.longitude}&state_id=${data.state_id}`,
+     {
+     method:"POST"
+     }
+     );
+     const json = await response.json();
+
+     if (!json.status || !json.current_coords) {
+         console.log("Invalid API response", json);
+         return;
+     }
+
+     const coords = json.current_coords;
+
+     webViewRef.current?.injectJavaScript(`
+     window.updateUserMarker(
+     ${coords[0]},
+     ${coords[1]},
+     ${JSON.stringify(json)}
+     );
+     true;
+     `);
+
+        console.log("Zone API:", json);
+
+        setZoneInfo(json);
+
+    } catch (e) {
+
+        console.log("Zone API Error", e);
+
+    }
+
+    return;
+}
       if (data.type === "MAP_READY") {
         setMapReady(true);
         return;
@@ -144,13 +301,19 @@ export default function HazardMapScreen() {
         navigation.navigate("StateDetail", {
           stateData: selected,
           pageName: PAGE_NAME,
-          hazardId
+               hazardId:hazardId
         });
       }
     } catch {}
   };
 
   /* ================= HTML ================= */
+  console.log("Creating HTML");
+  console.log("userState =", userState);
+  console.log("hazardData length =", hazardData.length);
+console.log("USER_STATE:", userState);
+console.log("hazardData Length:", hazardData.length);
+
 
   const html = `
 <!DOCTYPE html>
@@ -236,21 +399,38 @@ polygon{
   }
 }
 /* LABEL */
+#zoneLabel{
+    position:absolute;
+    left:0;
+    top:0;
 
-#zoneLabel {
-  position:absolute;
-  background: rgba(255,255,255,0.5);
-  padding:6px 10px;
-  border-radius:6px;
-  color:#cc0000;
-  font-size:17px;
-  font-weight:bold;
-  transform:translate(-50%, 0);
-  white-space:nowrap;
-  pointer-events:none;
-  z-index:9999;
-  animation: blink 1s infinite;
-  text-align: center;
+    background: rgba(255,255,255,0.5);
+    color:#cc0000;
+
+    padding:8px 12px;
+    border-radius:8px;
+
+    font-size:14px;
+    font-weight:bold;
+    line-height:20px;
+
+    text-align:center;
+
+    max-width:180px;      /* adjust if required */
+    width:max-content;
+
+    white-space:normal;   /* Allow multiple lines */
+    word-break:break-word;
+    overflow-wrap:break-word;
+
+    transform:translate(-50%,0);
+
+    pointer-events:none;
+    z-index:9999;
+
+    box-shadow:0 2px 8px rgba(0,0,0,.25);
+
+    animation:blink 2s infinite;
 }
 
 @keyframes blink{
@@ -284,17 +464,9 @@ const hazardData = ${JSON.stringify(hazardData)};
 const userLatLng = ${JSON.stringify(userLatLng)};
 const MAP_CONFIG = ${JSON.stringify(MAP_CONFIG)};
 const PAGE_NAME = "${PAGE_NAME}";
+const USER_STATE = ${JSON.stringify(userState)};
+let zoneApiResponse = null;
 const INDIA_BOUNDS = MAP_CONFIG[PAGE_NAME] || MAP_CONFIG["Earthquake Hazard"];
-
-function getZoneText(type){
-  if(type === "Earthquake Hazard"){
-    return "You are in <b>(Zone-II)</b><br><span style='color:red'>High Damage Risk Zone</span>";
-  }
-  if(type === "Wind Hazard"){
-    return "You are in <b>(Zone-II)</b><br><span style='color:red'>Very High Damage Risk Zone</span>";
-  }
-  return ""; // ❌ no label for others
-}
 
 const img = document.getElementById('mapImage');
 const overlay = document.getElementById('overlay');
@@ -432,8 +604,56 @@ wrapper.addEventListener("touchend", function(){
   isDragging = false;
 });
 
-/* ===== INIT ===== */
 
+window.updateUserMarker = function(imageX,imageY,zone){
+
+    const scaleX = img.clientWidth / img.naturalWidth;
+    const scaleY = img.clientHeight / img.naturalHeight;
+
+    const dotX = imageX * scaleX;
+    const dotY = imageY * scaleY;
+
+    userDot.style.left = dotX + "px";
+    userDot.style.top = dotY + "px";
+    userDot.style.display = "block";
+
+    x = dotX;
+    y = dotY;
+
+    if (
+        zone &&
+        zone.status === true &&
+        zone.zone_name &&
+        zone.zone_name.trim() !== ""
+    ) {
+
+        const zoneText = zone.zone_name
+            .replace("(", "<br>(")
+            .replace(" Zone-", " Zone-<br>");
+
+        zoneLabel.innerHTML =
+            '<div style="color:#cc0000;">You are in</div>' +
+            '<div style="color:#cc0000;font-weight:bold;">' +
+            zoneText +
+            '</div>';
+
+        zoneLabel.style.display = "block";
+
+    } else {
+
+        zoneLabel.innerHTML = "";
+        zoneLabel.style.display = "none";
+    }
+
+    scale = 3;
+
+    translateX = wrapper.clientWidth/2 - x*scale;
+    translateY = wrapper.clientHeight/2 - y*scale;
+
+    updateTransform();
+};
+
+/* ===== INIT ===== */
 img.onload = function(){
 
   const naturalW = img.naturalWidth;
@@ -471,51 +691,35 @@ img.onload = function(){
 
   });
 
-  if(userLatLng){
+if(USER_STATE){
 
-    const renderedW = img.clientWidth;
-    const renderedH = img.clientHeight;
+    const state = hazardData.find(s=>{
 
-x =
- ((userLatLng.longitude-INDIA_BOUNDS.minLng)/
- (INDIA_BOUNDS.maxLng-INDIA_BOUNDS.minLng))*renderedW;
+        return (
+            s.state_name.toLowerCase().trim() ===
+            USER_STATE.toLowerCase().trim()
+        );
 
-y =
- ((INDIA_BOUNDS.maxLat-userLatLng.latitude)/
- (INDIA_BOUNDS.maxLat-INDIA_BOUNDS.minLat))*renderedH;
+    });
+console.log("USER_STATE", USER_STATE);
+console.log(
+  "Available States",
+  hazardData.map(s => s.state_name)
+);
+console.log("Matched State", state);
 
-// ✅ apply offset safely
-if(INDIA_BOUNDS.offsetX){
-  x += INDIA_BOUNDS.offsetX;
-}
-if(INDIA_BOUNDS.offsetY){
-  y += INDIA_BOUNDS.offsetY;
-}
+    if(state){
 
-// ✅ clamp inside image (VERY IMPORTANT)
-x = Math.max(0, Math.min(renderedW, x));
-y = Math.max(0, Math.min(renderedH, y));
+     window.ReactNativeWebView.postMessage(
+     JSON.stringify({
+         type:"USER_LOCATION",
+         state_id:state.state_id
+     })
+     );
 
-    userDot.style.left = x + "px";
-    userDot.style.top  = y + "px";
-
-    userDot.style.display = "block";
-    const labelText = getZoneText(PAGE_NAME);
-
-    if(labelText){
-      zoneLabel.innerHTML = labelText;
-      zoneLabel.style.display = "block";
-    }else{
-      zoneLabel.style.display = "none";
     }
 
-    scale = 3;
-
-    translateX = wrapper.clientWidth/2 - x*scale;
-    translateY = wrapper.clientHeight/2 - y*scale;
-
-    updateTransform();
-  }
+}
 
   window.ReactNativeWebView.postMessage(JSON.stringify({type:"MAP_READY"}));
 
@@ -528,8 +732,19 @@ y = Math.max(0, Math.min(renderedH, y));
 `;
 
   return (
-    <AppLayout title={PAGE_NAME} subtitle="India" showBack showLogo>
-      <View style={{ flex: 1 }}>
+    <AppLayout
+     title={PAGE_NAME}
+     subtitle="India"
+     showBack
+     showLogo
+    >
+
+         {/*rightComponent={
+            <Pressable onPress={openPdf}>
+              <Icon name="visibility" size={24} color="#fff" />
+            </Pressable>
+          }*/}
+     <View style={{ flex: 1 }}>
         <WebView
           ref={webViewRef}
           source={{ html }}
@@ -556,4 +771,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#fff",
   },
+floatingIcon: {
+  position: "absolute",
+  top: -15,
+  right: 15,   // ✅ sticks to right side
+  zIndex: 999,
+}
 });
