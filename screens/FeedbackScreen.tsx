@@ -149,6 +149,11 @@ if (!trimmedPhone) {
         <TextInput
           style={[styles.input, errors.name ? styles.inputError : null]}
           value={name}
+          autoCorrect={false}
+          autoComplete="off"
+          contextMenuHidden={true}
+          selectTextOnFocus={false}
+          importantForAutofill="noExcludeDescendants"
       onChangeText={(text) => {
         setName(text);
         clearFieldError("name");
@@ -161,6 +166,11 @@ if (!trimmedPhone) {
         <TextInput
           style={[styles.input, errors.email ? styles.inputError : null]}
           value={email}
+          autoCorrect={false}
+          autoComplete="off"
+          contextMenuHidden={true}
+          selectTextOnFocus={false}
+          importantForAutofill="noExcludeDescendants"
          onChangeText={(text) => {
            setEmail(text.replace(/\s/g, ""));
            clearFieldError("email");
@@ -175,6 +185,11 @@ if (!trimmedPhone) {
         <TextInput
           style={[styles.input, errors.phone ? styles.inputError : null]}
           value={phone}
+          autoCorrect={false}
+          autoComplete="off"
+          contextMenuHidden={true}
+          selectTextOnFocus={false}
+          importantForAutofill="noExcludeDescendants"
           onChangeText={(text) => {
             setPhone(text.replace(/[^0-9]/g, ""));
             clearFieldError("phone");
@@ -187,6 +202,11 @@ if (!trimmedPhone) {
 
         <Text style={styles.label}>Comments</Text>
         <TextInput
+        autoCorrect={false}
+        autoComplete="off"
+        contextMenuHidden={true}
+        selectTextOnFocus={false}
+        importantForAutofill="noExcludeDescendants"
           style={[
             styles.input,
             styles.textArea,

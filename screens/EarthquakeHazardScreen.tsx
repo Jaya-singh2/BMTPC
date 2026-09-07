@@ -53,7 +53,6 @@ const MAP_CONFIG = {
 };
 
 
-
 export default function HazardMapScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
@@ -61,7 +60,7 @@ export default function HazardMapScreen() {
   const hazardId = route?.params?.hazardId;
   const JPG_MAP_URL =
     route?.params?.mapImage ||
-    "http://49.50.117.186/assets/uploads/img/hazards/1767087922_EQ_INDIA.jpg";
+    "https://vai.bmtpc.netcreativemind.com/assets/uploads/img/hazards/1767087922_EQ_INDIA.jpg";
 
   const API_URL = `https://vai.bmtpc.netcreativemind.com/api/v1/hazard-state-assembly-coordinates?hazard_id=${hazardId}`;
 
@@ -293,17 +292,32 @@ if (data.type === "USER_LOCATION") {
         return;
       }
 
-      if (data.state_id) {
-        const selected = hazardData.find(
-          (s) => s.state_id === data.state_id
+    if (data.state_id) {
+      const selected = hazardData.find(
+        s => s.state_id === data.state_id
+      );
+
+      if (!selected) return;
+
+      // Don't open StateDetail if state image is missing
+      if (
+        !selected.image ||
+        selected.image === null ||
+        selected.image.trim() === ""
+      ) {
+        console.log(
+          `State image not available for ${selected.state_name}`
         );
-        if (!selected) return;
-        navigation.navigate("StateDetail", {
-          stateData: selected,
-          pageName: PAGE_NAME,
-               hazardId:hazardId
-        });
+
+        return;
       }
+
+      navigation.navigate("StateDetail", {
+        stateData: selected,
+        pageName: PAGE_NAME,
+        hazardId: hazardId,
+      });
+    }
     } catch {}
   };
 
@@ -328,6 +342,16 @@ html,body{
   margin:0;padding:0;overflow:hidden;background:#fff;touch-action:none;
 }
 
+
+html,
+body,
+svg,
+polygon {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  outline: none;
+}
 #wrapper{
   position:relative;width:100vw;height:100vh;overflow:hidden;touch-action:none;
 }
@@ -347,6 +371,19 @@ html,body{
 polygon{
   stroke:none;
   cursor:pointer;
+  outline: none;
+}
+
+polygon:focus {
+  outline: none;
+}
+
+polygon:active {
+  outline: none;
+}
+
+polygon:focus-visible {
+  outline: none;
 }
 
 /* USER DOT */

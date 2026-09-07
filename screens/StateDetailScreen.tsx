@@ -380,7 +380,7 @@ polygon:hover {
     >
 
 <View style={styles.container}>
-  {apiStatus  ? (
+ {/* {apiStatus  ? ( */}
     <WebView
       ref={webViewRef}
       source={{ html }}
@@ -390,7 +390,7 @@ polygon:hover {
       onMessage={onMessage}
       style={{ flex: 1 }}
     />
-  ) : (
+  {/*  ) : (
     <View
       style={{
         flex: 1,
@@ -408,7 +408,8 @@ polygon:hover {
         Data Not Found
       </Text>
     </View>
-  )}
+  )
+}*/}
 </View>
     </AppLayout>
   );
