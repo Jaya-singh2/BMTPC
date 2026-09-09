@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   Alert,
   Image,
-  StatusBar
+  StatusBar,
+  BackHandler,
 } from "react-native";
 
 import { NavigationContainer } from "@react-navigation/native";
@@ -31,29 +32,26 @@ const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 
 /* =========================================================
-   🔥 SPLASH SCREEN (FULLSCREEN FIXED)
+   SPLASH SCREEN
 ========================================================= */
 
 function SplashScreen({ navigation }: any) {
-
   useEffect(() => {
     const timer = setTimeout(() => {
       navigation.replace("MainApp");
     }, 2500);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [navigation]);
 
   return (
     <View style={styles.splashContainer}>
-
-      {/* ✅ Hide status bar completely */}
       <StatusBar hidden={true} translucent={true} />
 
       <Image
         source={require("../assets/splash.png")}
         style={styles.splashImage}
-        resizeMode="stretch" // ✅ IMPORTANT (no white space)
+        resizeMode="stretch"
       />
     </View>
   );
@@ -67,19 +65,47 @@ function MainStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HomeMain" component={HomeScreen} />
-      <Stack.Screen name="EarthquakeHazardScreen" component={EarthquakeHazardScreen} />
-      <Stack.Screen name="StateDetail" component={StateDetailScreen} />
-      <Stack.Screen name="PdfViewerScreen" component={PdfViewerScreen} />
-      <Stack.Screen name="LocalPdfViewerScreen" component={LocalPdfViewerScreen} />
-      <Stack.Screen name="ContentScreen" component={ContentScreen} />
-      <Stack.Screen name="VulnerabilityRiskScreen" component={VulnerabilityRiskScreen} />
-      <Stack.Screen name="FeedbackScreen" component={FeedbackScreen} />
+
+      <Stack.Screen
+        name="EarthquakeHazardScreen"
+        component={EarthquakeHazardScreen}
+      />
+
+      <Stack.Screen
+        name="StateDetail"
+        component={StateDetailScreen}
+      />
+
+      <Stack.Screen
+        name="PdfViewerScreen"
+        component={PdfViewerScreen}
+      />
+
+      <Stack.Screen
+        name="LocalPdfViewerScreen"
+        component={LocalPdfViewerScreen}
+      />
+
+      <Stack.Screen
+        name="ContentScreen"
+        component={ContentScreen}
+      />
+
+      <Stack.Screen
+        name="VulnerabilityRiskScreen"
+        component={VulnerabilityRiskScreen}
+      />
+
+      <Stack.Screen
+        name="FeedbackScreen"
+        component={FeedbackScreen}
+      />
     </Stack.Navigator>
   );
 }
 
 /* =========================================================
-   DRAWER
+   MENU BUTTON
 ========================================================= */
 
 type MenuButtonProps = {
@@ -103,15 +129,21 @@ const MenuButton: React.FC<MenuButtonProps> = ({
     <TouchableOpacity
       style={[styles.menuBtn, active && styles.activeMenuBtn]}
       onPress={onPress}
+      activeOpacity={0.7}
     >
       <View style={styles.menuLeft}>
         <Ionicons name={icon} size={20} color="#222" />
+
         <Text style={styles.menuText}>{label}</Text>
       </View>
 
       {showArrow && (
         <Ionicons
-          name={isOpen ? "chevron-up-outline" : "chevron-down-outline"}
+          name={
+            isOpen
+              ? "chevron-up-outline"
+              : "chevron-down-outline"
+          }
           size={20}
           color="#222"
         />
@@ -120,11 +152,47 @@ const MenuButton: React.FC<MenuButtonProps> = ({
   );
 };
 
+/* =========================================================
+   CUSTOM DRAWER CONTENT
+========================================================= */
+
 function CustomDrawerContent(props: any) {
   const { navigation } = props;
 
   const [homeOpen, setHomeOpen] = useState(false);
   const [activeItem, setActiveItem] = useState("Home");
+
+  /* ---------------- FEEDBACK ---------------- */
+
+  const openFeedback = () => {
+    setActiveItem("Feedback");
+
+    navigation.navigate("MainApp", {
+      screen: "FeedbackScreen",
+    });
+  };
+
+  /* ---------------- EXIT APP ---------------- */
+
+  const exitApp = () => {
+    Alert.alert(
+      "Exit App",
+      "Are you sure you want to exit the application?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Exit",
+          style: "destructive",
+          onPress: () => {
+            BackHandler.exitApp();
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <View style={styles.drawerContainer}>
@@ -133,14 +201,22 @@ function CustomDrawerContent(props: any) {
       <View style={styles.drawerHeader}>
         <Text style={styles.drawerHeaderTitle}>Menu</Text>
 
-        <TouchableOpacity onPress={() => navigation.closeDrawer()}>
-          <Ionicons name="close-outline" size={24} color="#fff" />
+        <TouchableOpacity
+          onPress={() => navigation.closeDrawer()}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name="close-outline"
+            size={24}
+            color="#fff"
+          />
         </TouchableOpacity>
       </View>
 
       {/* BODY */}
       <View style={styles.drawerBody}>
 
+        {/* HOME */}
         <MenuButton
           label="Home"
           icon="home-outline"
@@ -153,27 +229,38 @@ function CustomDrawerContent(props: any) {
           }}
         />
 
+        {/* HOME SUB MENU */}
         {homeOpen && (
           <View style={{ marginLeft: 10 }}>
 
+            {/* HAZARDS */}
             <MenuButton
               label="Hazards"
               icon="warning-outline"
               onPress={() => {
+                setActiveItem("Hazards");
+
                 navigation.navigate("MainApp", {
                   screen: "HomeMain",
-                  params: { tab: "hazards" },
+                  params: {
+                    tab: "hazards",
+                  },
                 });
               }}
             />
 
+            {/* ABOUT US */}
             <MenuButton
               label="About Us"
               icon="document-text-outline"
               onPress={() => {
+                setActiveItem("About Us");
+
                 navigation.navigate("MainApp", {
                   screen: "HomeMain",
-                  params: { tab: "about" },
+                  params: {
+                    tab: "about",
+                  },
                 });
               }}
             />
@@ -181,16 +268,19 @@ function CustomDrawerContent(props: any) {
           </View>
         )}
 
+        {/* FEEDBACK */}
         <MenuButton
-          label="Share"
-          icon="share-social-outline"
-          onPress={() => Alert.alert("Share", "Not implemented")}
+          label="Feedback"
+          icon="chatbox-ellipses-outline"
+          active={activeItem === "Feedback"}
+          onPress={openFeedback}
         />
 
+        {/* EXIT */}
         <MenuButton
           label="Exit"
           icon="log-out-outline"
-          onPress={() => Alert.alert("Exit", "Not implemented")}
+          onPress={exitApp}
         />
 
       </View>
@@ -198,23 +288,33 @@ function CustomDrawerContent(props: any) {
   );
 }
 
+/* =========================================================
+   DRAWER NAVIGATOR
+========================================================= */
+
 function DrawerNavigator() {
   return (
     <Drawer.Navigator
       drawerPosition="right"
-      drawerContent={(props) => <CustomDrawerContent {...props} />}
+      drawerContent={(props) => (
+        <CustomDrawerContent {...props} />
+      )}
       screenOptions={{
         headerShown: false,
         swipeEnabled: false,
         drawerType: "front",
         overlayColor: "rgba(0,0,0,0.25)",
+
         drawerStyle: {
           width: "92%",
           backgroundColor: "#f5f5f5",
         },
       }}
     >
-      <Drawer.Screen name="MainApp" component={MainStack} />
+      <Drawer.Screen
+        name="MainApp"
+        component={MainStack}
+      />
     </Drawer.Navigator>
   );
 }
@@ -225,9 +325,20 @@ function DrawerNavigator() {
 
 function RootStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Splash" component={SplashScreen} />
-      <Stack.Screen name="MainApp" component={DrawerNavigator} />
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <Stack.Screen
+        name="Splash"
+        component={SplashScreen}
+      />
+
+      <Stack.Screen
+        name="MainApp"
+        component={DrawerNavigator}
+      />
     </Stack.Navigator>
   );
 }
@@ -317,3 +428,4 @@ const styles = StyleSheet.create({
   },
 
 });
+

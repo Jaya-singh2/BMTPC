@@ -6,7 +6,7 @@ import {
   Image,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import { useNavigation } from "@react-navigation/native";
+import {  DrawerActions,useNavigation } from "@react-navigation/native";
 
 interface HeaderProps {
   title?: string;
@@ -68,7 +68,8 @@ const Header: React.FC<HeaderProps> = ({
      {/* MENU */}
      <Pressable
        style={styles.menuButton}
-       onPress={() => navigation.toggleDrawer()}
+       onPress={() => { navigation.dispatch(DrawerActions.toggleDrawer()); }}
+       //onPress={() => navigation.toggleDrawer()}
      >
        <Ionicons
          name="menu"

@@ -43,7 +43,7 @@ export default function FeedbackScreen() {
     const trimmedComments = comments.trim();
 
     const emailRegex = /^[a-zA-Z][a-zA-Z0-9._]*@[a-zA-Z]+\.[a-zA-Z]{2,}$/;
-    const phoneRegex = /^[7][0-9]{9}$/;
+    const phoneRegex = /^[6-9][0-9]{9}$/;
 
 const nameRegex = /^[A-Za-z ]+$/;
 
@@ -70,7 +70,7 @@ if (!trimmedPhone) {
   newErrors.phone = "Please enter your phone number";
   valid = false;
 } else if (!phoneRegex.test(trimmedPhone)) {
-  newErrors.phone = "Phone must start with 7 and be 10 digits";
+  newErrors.phone = "Phone must start with 6-9 and be 10 digits";
   valid = false;
 }
 
