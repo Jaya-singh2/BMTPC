@@ -1,59 +1,102 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-import React, { useEffect } from 'react';
-import { NewAppScreen } from '@react-native/new-app-screen';
+import React, {useEffect, useState} from 'react';
 import {
   StatusBar,
   StyleSheet,
-  useColorScheme,
+  Text,
   View,
-  Alert,
-  Platform
+  ActivityIndicator,
+  useColorScheme,
+  Platform,
 } from 'react-native';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
-import EarthQuakeHazardScreen from "./screens/EarthquakeHazardScreen";
-import HomeScreen from "./screens/HomeScreen"
-import AppNavigator from "./Navigation/AppNavigator"
-import { isJailbroken } from './utils/jailbreakDetection';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
+
+import {checkRootedDevice} from './utils/rootDetection';
+import AppNavigator from './Navigation/AppNavigator';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
 
-  useEffect(() => {
-    const checkJailbreak = async () => {
+  const [isCheckingRoot, setIsCheckingRoot] = useState(
+    Platform.OS === 'android',
+  );
 
-      if (Platform.OS !== 'ios') {
+  const [isRooted, setIsRooted] = useState(false);
+
+  useEffect(() => {
+    const checkDevice = async () => {
+      // Root detection is only for Android.
+      // iOS uses native jailbreak detection
+      // in AppDelegate.swift.
+      if (Platform.OS !== 'android') {
+        setIsCheckingRoot(false);
         return;
       }
 
-      const detected = await isJailbroken();
+      try {
+        const rooted = await checkRootedDevice();
 
-      if (detected) {
-        Alert.alert(
-          'Security Warning',
-          'This application cannot run on a compromised device.',
-          [
-            {
-              text: 'OK',
-            },
-          ],
-          {
-            cancelable: false,
-          }
-        );
+        setIsRooted(rooted);
+      } catch (error) {
+        console.warn('Root detection failed:', error);
+
+        // If detection itself fails, don't block the app.
+        setIsRooted(false);
+      } finally {
+        setIsCheckingRoot(false);
       }
     };
 
-    checkJailbreak();
+    checkDevice();
   }, []);
 
+  // -----------------------------------------
+  // Android: checking device security
+  // -----------------------------------------
+  if (Platform.OS === 'android' && isCheckingRoot) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar barStyle="dark-content" />
+
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" />
+
+          <Text style={styles.text}>
+            Checking device security...
+          </Text>
+        </View>
+      </SafeAreaProvider>
+    );
+  }
+
+  // -----------------------------------------
+  // Android: rooted device detected
+  // -----------------------------------------
+  if (Platform.OS === 'android' && isRooted) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar barStyle="dark-content" />
+
+        <View style={styles.centerContainer}>
+          <Text style={styles.title}>
+            Security Warning
+          </Text>
+
+          <Text style={styles.message}>
+            This application cannot run on a rooted device.
+          </Text>
+
+          <Text style={styles.message}>
+            Please use a device with the original Android
+            security settings.
+          </Text>
+        </View>
+      </SafeAreaProvider>
+    );
+  }
+
+  // -----------------------------------------
+  // Android non-rooted OR iOS
+  // -----------------------------------------
   return (
     <SafeAreaProvider>
       <StatusBar
@@ -65,22 +108,30 @@ function App() {
   );
 }
 
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
-
-  return (
-    <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  container: {
+  centerContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 30,
+  },
+
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+
+  text: {
+    marginTop: 15,
+    fontSize: 16,
+    textAlign: 'center',
+  },
+
+  message: {
+    textAlign: 'center',
+    fontSize: 16,
+    marginTop: 10,
   },
 });
 

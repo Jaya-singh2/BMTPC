@@ -6,96 +6,152 @@ import React
 @objc(JailbreakDetection)
 class JailbreakDetection: NSObject {
 
+    // MARK: - React Native method
+
     @objc
     func isJailbroken(
         _ resolve: RCTPromiseResolveBlock,
         rejecter reject: RCTPromiseRejectBlock
     ) {
+        resolve(Self.performJailbreakCheck())
+    }
+
+    // MARK: - Native check
+
+    static func performJailbreakCheck() -> Bool {
 
         #if targetEnvironment(simulator)
-        resolve(false)
-        return
-        #endif
+        return false
+        #else
 
-        var detected = false
-
-        // 1. Check common jailbreak files
+        // 1. Common jailbreak files / directories
         let jailbreakPaths = [
             "/Applications/Cydia.app",
+            "/Applications/Sileo.app",
+            "/Applications/Zebra.app",
+
             "/Library/MobileSubstrate/MobileSubstrate.dylib",
-            "/bin/bash",
+            "/Library/MobileSubstrate",
+
             "/usr/sbin/sshd",
-            "/etc/apt",
-            "/private/var/lib/apt/",
-            "/private/var/stash",
             "/usr/bin/ssh",
-            "/usr/libexec/ssh-keysign"
+            "/usr/libexec/ssh-keysign",
+            "/bin/bash",
+            "/bin/sh",
+
+            "/etc/apt",
+            "/private/var/lib/apt",
+            "/private/var/lib/cydia",
+            "/private/var/stash",
+
+            // Modern jailbreak locations
+            "/var/jb",
+            "/var/jb/usr/bin",
+            "/var/jb/Applications",
+            "/private/preboot/jb"
         ]
 
         for path in jailbreakPaths {
             if FileManager.default.fileExists(atPath: path) {
-                detected = true
-                break
+                return true
             }
         }
 
         // 2. Sandbox integrity check
-        if !detected {
-            let testPath = "/private/jailbreak_test.txt"
+        let testPath = "/private/jailbreak_test.txt"
+
+        do {
+            try "jailbreak-test".write(
+                toFile: testPath,
+                atomically: true,
+                encoding: .utf8
+            )
+
+            try? FileManager.default.removeItem(atPath: testPath)
+
+            // A normal iOS application should NOT be able
+            // to write to /private.
+            return true
+
+        } catch {
+            // Expected on a normal device.
+        }
+
+        // 3. Suspicious URL schemes
+        let suspiciousSchemes = [
+            "cydia://",
+            "sileo://",
+            "zbra://"
+        ]
+
+        for scheme in suspiciousSchemes {
+
+            guard let url = URL(string: scheme) else {
+                continue
+            }
+
+            if UIApplication.shared.canOpenURL(url) {
+                return true
+            }
+        }
+
+        // 4. Suspicious dynamic libraries
+        let suspiciousLibraries = [
+            "MobileSubstrate",
+            "Substrate",
+            "SubstrateLoader",
+            "Substitute",
+            "libhooker",
+            "ElleKit",
+            "FridaGadget",
+            "frida",
+            "TweakInject"
+        ]
+
+        for i in 0..<_dyld_image_count() {
+
+            guard let imageNamePointer = _dyld_get_image_name(i) else {
+                continue
+            }
+
+            let imageName = String(cString: imageNamePointer)
+
+            for library in suspiciousLibraries {
+
+                if imageName.localizedCaseInsensitiveContains(library) {
+                    return true
+                }
+            }
+        }
+
+        // 5. Suspicious symbolic links
+        let suspiciousLinkPaths = [
+            "/Applications",
+            "/Library/Ringtones",
+            "/Library/Wallpaper",
+            "/usr/arm-apple-darwin9"
+        ]
+
+        for path in suspiciousLinkPaths {
 
             do {
-                try "test".write(
-                    toFile: testPath,
-                    atomically: true,
-                    encoding: .utf8
-                )
+                let attributes =
+                    try FileManager.default.attributesOfItem(atPath: path)
 
-                try? FileManager.default.removeItem(atPath: testPath)
+                if let type =
+                    attributes[.type] as? FileAttributeType,
+                   type == .typeSymbolicLink {
 
-                detected = true
+                    return true
+                }
+
             } catch {
-                // Normal iOS sandbox behavior
+                continue
             }
         }
 
-        // 3. Check Cydia URL scheme
-        if !detected {
-            if let url = URL(string: "cydia://package/com.example.package") {
-                if UIApplication.shared.canOpenURL(url) {
-                    detected = true
-                }
-            }
-        }
+        return false
 
-        // 4. Check suspicious dynamic libraries
-        if !detected {
-            let suspiciousLibraries = [
-                "Substrate",
-                "Substitute",
-                "FridaGadget",
-                "libhooker"
-            ]
-
-            for i in 0..<_dyld_image_count() {
-
-                if let imageName = _dyld_get_image_name(i) {
-
-                    let image = String(cString: imageName)
-
-                    for library in suspiciousLibraries {
-                        if image.localizedCaseInsensitiveContains(library) {
-                            detected = true
-                            break
-                        }
-                    }
-                }
-
-                if detected {
-                    break
-                }
-            }
-        }
-
-        resolve(detected)
+        #endif
     }
 }

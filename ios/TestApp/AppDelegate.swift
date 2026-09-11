@@ -14,12 +14,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   // Privacy overlay used to protect the app-switcher snapshot
   private var privacyView: UIView?
 
-  func application(
+ func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
-  ) -> Bool {
+) -> Bool {
 
     let delegate = ReactNativeDelegate()
+
     let factory = RCTReactNativeFactory(delegate: delegate)
 
     delegate.dependencyProvider = RCTAppDependencyProvider()
@@ -30,13 +31,57 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     window = UIWindow(frame: UIScreen.main.bounds)
 
     factory.startReactNative(
-      withModuleName: "TestApp",
-      in: window,
-      launchOptions: launchOptions
+        withModuleName: "TestApp",
+        in: window,
+        launchOptions: launchOptions
     )
 
+    // Check device security after the React Native application
+    // has been initialized.
+    DispatchQueue.main.async { [weak self] in
+        self?.checkDeviceSecurity()
+    }
+
     return true
-  }
+}
+
+// MARK: - Device Security
+
+private func checkDeviceSecurity() {
+
+    let isJailbroken = JailbreakDetection.performJailbreakCheck()
+
+    if isJailbroken {
+
+        showJailbreakWarning()
+    }
+}
+
+private func showJailbreakWarning() {
+
+    guard let window = window,
+          let rootViewController = window.rootViewController else {
+        return
+    }
+
+    let alert = UIAlertController(
+        title: "Security Warning",
+        message: "This application cannot be used on a compromised device.",
+        preferredStyle: .alert
+    )
+
+    alert.addAction(
+        UIAlertAction(
+            title: "OK",
+            style: .default
+        )
+    )
+
+    rootViewController.present(
+        alert,
+        animated: true
+    )
+}
 
   // MARK: - Privacy Protection
 

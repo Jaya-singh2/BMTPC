@@ -34,6 +34,12 @@
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app needs your location to show hazard zones near you.</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+  	  	<string>cydia</string>
+    	<string>sileo</string>
+    	<string>zbra</string>
+	</array>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>This app needs your location to show hazard zones near you.</string>
 	<key>UILaunchStoryboardName</key>
