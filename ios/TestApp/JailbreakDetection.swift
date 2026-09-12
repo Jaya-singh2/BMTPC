@@ -1,12 +1,13 @@
 import Foundation
 import UIKit
 import Darwin
+import MachO
 import React
 
 @objc(JailbreakDetection)
-class JailbreakDetection: NSObject {
+final class JailbreakDetection: NSObject {
 
-    // MARK: - React Native method
+    // MARK: - React Native
 
     @objc
     func isJailbroken(
@@ -16,15 +17,16 @@ class JailbreakDetection: NSObject {
         resolve(Self.performJailbreakCheck())
     }
 
-    // MARK: - Native check
+    // MARK: - Native Jailbreak Check
 
+    @objc
     static func performJailbreakCheck() -> Bool {
 
         #if targetEnvironment(simulator)
         return false
         #else
 
-        // 1. Common jailbreak files / directories
+        // 1. Common jailbreak files/directories
         let jailbreakPaths = [
             "/Applications/Cydia.app",
             "/Applications/Sileo.app",
@@ -36,6 +38,7 @@ class JailbreakDetection: NSObject {
             "/usr/sbin/sshd",
             "/usr/bin/ssh",
             "/usr/libexec/ssh-keysign",
+
             "/bin/bash",
             "/bin/sh",
 
@@ -44,7 +47,7 @@ class JailbreakDetection: NSObject {
             "/private/var/lib/cydia",
             "/private/var/stash",
 
-            // Modern jailbreak locations
+            // Modern jailbreaks
             "/var/jb",
             "/var/jb/usr/bin",
             "/var/jb/Applications",
@@ -58,7 +61,7 @@ class JailbreakDetection: NSObject {
         }
 
         // 2. Sandbox integrity check
-        let testPath = "/private/jailbreak_test.txt"
+        let testPath = "/private/jailbreak_test_\(UUID().uuidString)"
 
         do {
             try "jailbreak-test".write(
@@ -69,8 +72,7 @@ class JailbreakDetection: NSObject {
 
             try? FileManager.default.removeItem(atPath: testPath)
 
-            // A normal iOS application should NOT be able
-            // to write to /private.
+            // Writing outside the sandbox should not be possible
             return true
 
         } catch {
@@ -81,7 +83,7 @@ class JailbreakDetection: NSObject {
         let suspiciousSchemes = [
             "cydia://",
             "sileo://",
-            "zbra://"
+            "zebra://"
         ]
 
         for scheme in suspiciousSchemes {
@@ -108,9 +110,9 @@ class JailbreakDetection: NSObject {
             "TweakInject"
         ]
 
-        for i in 0..<_dyld_image_count() {
+        for index in 0..<_dyld_image_count() {
 
-            guard let imageNamePointer = _dyld_get_image_name(i) else {
+            guard let imageNamePointer = _dyld_get_image_name(index) else {
                 continue
             }
 
@@ -135,12 +137,13 @@ class JailbreakDetection: NSObject {
         for path in suspiciousLinkPaths {
 
             do {
+
                 let attributes =
                     try FileManager.default.attributesOfItem(atPath: path)
 
                 if let type =
                     attributes[.type] as? FileAttributeType,
-                   type == .typeSymbolicLink {
+                    type == .typeSymbolicLink {
 
                     return true
                 }

@@ -4,7 +4,7 @@
 
 RCT_EXTERN_METHOD(
     isJailbroken:(RCTPromiseResolveBlock)resolve
-    rejecter:(RCTPromiseRejectBlock)rejectA
+    rejecter:(RCTPromiseRejectBlock)reject
 )
 
 @end
