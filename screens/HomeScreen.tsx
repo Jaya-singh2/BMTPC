@@ -15,6 +15,7 @@ import AppLayout from "../components/AppLayout";
 import HazardCard from "../components/HazardCard";
 import AboutUsCard from "../components/AboutUsCard";
 import { hazards } from "../data/HomeData";
+import {apiGet} from '../services/api';
 
 type Screen = "hazards" | "about";
 
@@ -84,13 +85,8 @@ setHazardsData(dataM);
 
   const fetchAboutData = async () => {
     try {
-      const res = await fetch(
-        "https://vai.bmtpc.netcreativemind.com/api/mobile-app-content"
-      );
-
-      const json = await res.json();
-
-      setAboutData(json?.data || []);
+     const res = await apiGet( '/api/mobile-app-content', ); 
+     setAboutData(res?.data || []);
       setLoading(false);
     } catch {
       setLoading(false);

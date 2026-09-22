@@ -8,8 +8,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
-    var reactNativeDelegate: ReactNativeDelegate?
-    var reactNativeFactory: RCTReactNativeFactory?
+    var reactNativeDelegate:
+        ReactNativeDelegate?
+
+    var reactNativeFactory:
+        RCTReactNativeFactory?
 
     private var privacyView: UIView?
 
@@ -19,15 +22,45 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
 
-        let delegate = ReactNativeDelegate()
-        let factory = RCTReactNativeFactory(delegate: delegate)
+        window = UIWindow(
+            frame: UIScreen.main.bounds
+        )
 
-        delegate.dependencyProvider = RCTAppDependencyProvider()
+        // =====================================
+        // JAILBREAK SECURITY CHECK
+        // =====================================
 
-        reactNativeDelegate = delegate
-        reactNativeFactory = factory
+        #if !targetEnvironment(simulator)
 
-        window = UIWindow(frame: UIScreen.main.bounds)
+        if JailbreakDetection.performJailbreakCheck() {
+
+            showJailbreakBlockedScreen()
+
+            return true
+        }
+
+        #endif
+
+        // =====================================
+        // START REACT NATIVE
+        // =====================================
+
+        let delegate =
+            ReactNativeDelegate()
+
+        let factory =
+            RCTReactNativeFactory(
+                delegate: delegate
+            )
+
+        delegate.dependencyProvider =
+            RCTAppDependencyProvider()
+
+        reactNativeDelegate =
+            delegate
+
+        reactNativeFactory =
+            factory
 
         factory.startReactNative(
             withModuleName: "TestApp",
@@ -35,55 +68,117 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             launchOptions: launchOptions
         )
 
-        DispatchQueue.main.async { [weak self] in
-            self?.checkDeviceSecurity()
-        }
-
         return true
     }
 
-    // MARK: - Device Security
+    // =========================================
+    // JAILBREAK BLOCK SCREEN
+    // =========================================
 
-    private func checkDeviceSecurity() {
+    private func showJailbreakBlockedScreen() {
 
-        let isJailbroken =
-            JailbreakDetection.performJailbreakCheck()
-
-        if isJailbroken {
-            showJailbreakWarning()
-        }
-    }
-
-    private func showJailbreakWarning() {
-
-        guard
-            let window = window,
-            let rootViewController = window.rootViewController
-        else {
+        guard let window = window else {
             return
         }
 
-        let alert = UIAlertController(
-            title: "Security Warning",
-            message:
-                "This application cannot be used on a compromised device.",
-            preferredStyle: .alert
-        )
+        let viewController =
+            UIViewController()
 
-        alert.addAction(
-            UIAlertAction(
-                title: "OK",
-                style: .default
+        viewController.view.backgroundColor =
+            .systemBackground
+
+        let titleLabel =
+            UILabel()
+
+        titleLabel.text =
+            "Security Warning"
+
+        titleLabel.font =
+            UIFont.boldSystemFont(
+                ofSize: 24
             )
+
+        titleLabel.textAlignment =
+            .center
+
+        titleLabel.textColor =
+            .label
+
+        let messageLabel =
+            UILabel()
+
+        messageLabel.text = """
+        This application cannot run on a compromised device.
+
+        Please use a device with the original iOS
+        security environment.
+        """
+
+        messageLabel.font =
+            UIFont.systemFont(ofSize: 16)
+
+        messageLabel.textAlignment =
+            .center
+
+        messageLabel.numberOfLines =
+            0
+
+        messageLabel.textColor =
+            .secondaryLabel
+
+        let stack =
+            UIStackView(
+                arrangedSubviews: [
+                    titleLabel,
+                    messageLabel
+                ]
+            )
+
+        stack.axis =
+            .vertical
+
+        stack.spacing =
+            20
+
+        stack.alignment =
+            .fill
+
+        stack.translatesAutoresizingMaskIntoConstraints =
+            false
+
+        viewController.view.addSubview(
+            stack
         )
 
-        rootViewController.present(
-            alert,
-            animated: true
-        )
+        NSLayoutConstraint.activate([
+
+            stack.leadingAnchor.constraint(
+                equalTo:
+                    viewController.view.leadingAnchor,
+                constant: 30
+            ),
+
+            stack.trailingAnchor.constraint(
+                equalTo:
+                    viewController.view.trailingAnchor,
+                constant: -30
+            ),
+
+            stack.centerYAnchor.constraint(
+                equalTo:
+                    viewController.view.centerYAnchor
+            )
+        ])
+
+        window.rootViewController =
+            viewController
+
+        window.makeKeyAndVisible()
     }
 
-    // MARK: - Privacy Protection
+    // =========================================
+    // PRIVACY PROTECTION
+    // =========================================
 
     func applicationWillResignActive(
         _ application: UIApplication
@@ -107,43 +202,68 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             return
         }
 
-        let overlay = UIView(frame: window.bounds)
+        let overlay =
+            UIView(frame: window.bounds)
 
-        overlay.backgroundColor = .systemBackground
+        overlay.backgroundColor =
+            .systemBackground
 
         overlay.autoresizingMask = [
             .flexibleWidth,
             .flexibleHeight
         ]
 
-        let label = UILabel()
+        let label =
+            UILabel()
 
-        label.text = "TestApp"
-        label.font = UIFont.boldSystemFont(ofSize: 24)
-        label.textColor = .label
-        label.textAlignment = .center
-        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text =
+            "TestApp"
+
+        label.font =
+            UIFont.boldSystemFont(
+                ofSize: 24
+            )
+
+        label.textColor =
+            .label
+
+        label.textAlignment =
+            .center
+
+        label.translatesAutoresizingMaskIntoConstraints =
+            false
 
         overlay.addSubview(label)
 
         NSLayoutConstraint.activate([
+
             label.centerXAnchor.constraint(
-                equalTo: overlay.centerXAnchor
+                equalTo:
+                    overlay.centerXAnchor
             ),
+
             label.centerYAnchor.constraint(
-                equalTo: overlay.centerYAnchor
+                equalTo:
+                    overlay.centerYAnchor
             )
         ])
 
-        window.addSubview(overlay)
-        window.bringSubviewToFront(overlay)
+        window.addSubview(
+            overlay
+        )
 
-        privacyView = overlay
+        window.bringSubviewToFront(
+            overlay
+        )
+
+        privacyView =
+            overlay
     }
 
     private func hidePrivacyView() {
 
         privacyView?.removeFromSuperview()
+
         privacyView = nil
     }
 }
@@ -154,6 +274,7 @@ class ReactNativeDelegate:
     override func sourceURL(
         for bridge: RCTBridge
     ) -> URL? {
+
         self.bundleURL()
     }
 
@@ -161,8 +282,11 @@ class ReactNativeDelegate:
 
         #if DEBUG
 
-        return RCTBundleURLProvider.sharedSettings()
-            .jsBundleURL(forBundleRoot: "index")
+        return RCTBundleURLProvider
+            .sharedSettings()
+            .jsBundleURL(
+                forBundleRoot: "index"
+            )
 
         #else
 
