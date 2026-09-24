@@ -1,27 +1,37 @@
-import {NativeModules, Platform} from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 
-const {JailbreakDetection} = NativeModules;
+type JailbreakDetectionModule = {
+  isJailbroken: () => Promise<boolean>;
+};
 
-export const checkJailbrokenDevice =
-  async (): Promise<boolean> => {
+const { JailbreakDetection } = NativeModules as {
+  JailbreakDetection?: JailbreakDetectionModule;
+};
 
-    if (Platform.OS !== 'ios') {
-      return false;
-    }
+export const checkJailbrokenDevice = async (): Promise<boolean> => {
+  // Jailbreak detection is only required on iOS
+  if (Platform.OS !== 'ios') {
+    return false;
+  }
 
-    try {
-      const result =
-        await JailbreakDetection.isJailbroken();
-
-      return Boolean(result);
-
-    } catch (error) {
-
-      console.error(
-        'Jailbreak detection error:',
-        error
+  try {
+    if (!JailbreakDetection) {
+      console.warn(
+        'JailbreakDetection native module is not available.',
       );
 
       return false;
     }
-  };
+
+    const result = await JailbreakDetection.isJailbroken();
+
+    return Boolean(result);
+  } catch (error) {
+    console.error(
+      'Jailbreak detection error:',
+      error,
+    );
+
+    return false;
+  }
+};

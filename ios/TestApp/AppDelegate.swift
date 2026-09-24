@@ -14,7 +14,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     private var privacyView: UIView?
 
-    // MARK: - Application launch
+    // MARK: - Application Launch
 
     func application(
         _ application: UIApplication,
@@ -26,27 +26,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             frame: UIScreen.main.bounds
         )
 
-        /*
-         ============================================================
-         PRIMARY SECURITY GATE
-         ============================================================
-
-         IMPORTANT:
-
-         This check happens BEFORE React Native starts.
-
-         If the device is compromised:
-
-             NativeSecurityManager
-                    ↓
-                COMPROMISED
-                    ↓
-              BLOCK SCREEN
-                    ↓
-            React Native DOES NOT START
-
-         ============================================================
-        */
+        // ==================================================
+        // PRIMARY NATIVE SECURITY CHECK
+        // ==================================================
 
         let securityResult =
             NativeSecurityManager.check()
@@ -55,16 +37,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
             showSecurityBlockedScreen()
 
+            // IMPORTANT:
+            // React Native is NOT started.
             return true
         }
 
-        /*
-         ============================================================
-         CLEAN DEVICE
-         ============================================================
-        */
+        // ==================================================
+        // START REACT NATIVE ONLY AFTER SECURITY PASSES
+        // ==================================================
 
-        let delegate = ReactNativeDelegate()
+        let delegate =
+            ReactNativeDelegate()
 
         let factory =
             RCTReactNativeFactory(
@@ -74,19 +57,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         delegate.dependencyProvider =
             RCTAppDependencyProvider()
 
-        reactNativeDelegate = delegate
+        reactNativeDelegate =
+            delegate
 
-        reactNativeFactory = factory
+        reactNativeFactory =
+            factory
 
         guard let window = window else {
             return false
         }
-
-        /*
-         ============================================================
-         START REACT NATIVE ONLY AFTER SECURITY CHECK
-         ============================================================
-        */
 
         factory.startReactNative(
             withModuleName: "TestApp",
@@ -114,19 +93,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         window.makeKeyAndVisible()
     }
 
-    // MARK: - Privacy screen
+    // MARK: - Privacy Screen
 
     func applicationWillResignActive(
         _ application: UIApplication
     ) {
-
         showPrivacyView()
     }
 
     func applicationDidBecomeActive(
         _ application: UIApplication
     ) {
-
         hidePrivacyView()
     }
 
@@ -151,10 +128,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             .flexibleHeight
         ]
 
-        let label = UILabel()
+        let label =
+            UILabel()
 
-        label.text =
-            "BMTPC"
+        label.text = "BMTPC"
 
         label.font =
             UIFont.boldSystemFont(
@@ -200,7 +177,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 }
 
-// MARK: - Security blocked screen
+// MARK: - Security Block Screen
 
 final class SecurityBlockedViewController:
     UIViewController {
@@ -225,7 +202,8 @@ final class SecurityBlockedViewController:
 
         view.addSubview(container)
 
-        let icon = UIImageView()
+        let icon =
+            UIImageView()
 
         if #available(iOS 13.0, *) {
 
@@ -332,56 +310,56 @@ final class SecurityBlockedViewController:
             ),
 
             icon.centerXAnchor.constraint(
-                equalTo: container.centerXAnchor
+                equalTo:
+                    container.centerXAnchor
             ),
 
             icon.topAnchor.constraint(
-                equalTo: container.topAnchor
+                equalTo:
+                    container.topAnchor
             ),
 
             titleLabel.topAnchor.constraint(
-                equalTo: icon.bottomAnchor,
+                equalTo:
+                    icon.bottomAnchor,
                 constant: 24
             ),
 
             titleLabel.leadingAnchor.constraint(
-                equalTo: container.leadingAnchor
+                equalTo:
+                    container.leadingAnchor
             ),
 
             titleLabel.trailingAnchor.constraint(
-                equalTo: container.trailingAnchor
+                equalTo:
+                    container.trailingAnchor
             ),
 
             messageLabel.topAnchor.constraint(
-                equalTo: titleLabel.bottomAnchor,
+                equalTo:
+                    titleLabel.bottomAnchor,
                 constant: 16
             ),
 
             messageLabel.leadingAnchor.constraint(
-                equalTo: container.leadingAnchor
+                equalTo:
+                    container.leadingAnchor
             ),
 
             messageLabel.trailingAnchor.constraint(
-                equalTo: container.trailingAnchor
+                equalTo:
+                    container.trailingAnchor
             ),
 
             messageLabel.bottomAnchor.constraint(
-                equalTo: container.bottomAnchor
+                equalTo:
+                    container.bottomAnchor
             )
         ])
     }
-
-    /*
-     Prevent the user from dismissing or navigating away
-     from the security screen.
-    */
-
-    override var shouldAutorotate: Bool {
-        return false
-    }
 }
 
-// MARK: - React Native delegate
+// MARK: - React Native Delegate
 
 class ReactNativeDelegate:
     RCTDefaultReactNativeFactoryDelegate {
