@@ -8,13 +8,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
-    var reactNativeDelegate:
-        ReactNativeDelegate?
+    var reactNativeDelegate: ReactNativeDelegate?
 
-    var reactNativeFactory:
-        RCTReactNativeFactory?
+    var reactNativeFactory: RCTReactNativeFactory?
 
     private var privacyView: UIView?
+
+    // MARK: - Application launch
 
     func application(
         _ application: UIApplication,
@@ -26,27 +26,45 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             frame: UIScreen.main.bounds
         )
 
-        // =====================================
-        // JAILBREAK SECURITY CHECK
-        // =====================================
+        /*
+         ============================================================
+         PRIMARY SECURITY GATE
+         ============================================================
 
-        #if !targetEnvironment(simulator)
+         IMPORTANT:
 
-        if JailbreakDetection.performJailbreakCheck() {
+         This check happens BEFORE React Native starts.
 
-            showJailbreakBlockedScreen()
+         If the device is compromised:
+
+             NativeSecurityManager
+                    ↓
+                COMPROMISED
+                    ↓
+              BLOCK SCREEN
+                    ↓
+            React Native DOES NOT START
+
+         ============================================================
+        */
+
+        let securityResult =
+            NativeSecurityManager.check()
+
+        if securityResult.isCompromised {
+
+            showSecurityBlockedScreen()
 
             return true
         }
 
-        #endif
+        /*
+         ============================================================
+         CLEAN DEVICE
+         ============================================================
+        */
 
-        // =====================================
-        // START REACT NATIVE
-        // =====================================
-
-        let delegate =
-            ReactNativeDelegate()
+        let delegate = ReactNativeDelegate()
 
         let factory =
             RCTReactNativeFactory(
@@ -56,11 +74,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         delegate.dependencyProvider =
             RCTAppDependencyProvider()
 
-        reactNativeDelegate =
-            delegate
+        reactNativeDelegate = delegate
 
-        reactNativeFactory =
-            factory
+        reactNativeFactory = factory
+
+        guard let window = window else {
+            return false
+        }
+
+        /*
+         ============================================================
+         START REACT NATIVE ONLY AFTER SECURITY CHECK
+         ============================================================
+        */
 
         factory.startReactNative(
             withModuleName: "TestApp",
@@ -71,104 +97,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return true
     }
 
-    // =========================================
-    // JAILBREAK BLOCK SCREEN
-    // =========================================
+    // MARK: - Security blocked screen
 
-    private func showJailbreakBlockedScreen() {
+    private func showSecurityBlockedScreen() {
 
         guard let window = window else {
             return
         }
 
         let viewController =
-            UIViewController()
-
-        viewController.view.backgroundColor =
-            .systemBackground
-
-        let titleLabel =
-            UILabel()
-
-        titleLabel.text =
-            "Security Warning"
-
-        titleLabel.font =
-            UIFont.boldSystemFont(
-                ofSize: 24
-            )
-
-        titleLabel.textAlignment =
-            .center
-
-        titleLabel.textColor =
-            .label
-
-        let messageLabel =
-            UILabel()
-
-        messageLabel.text = """
-        This application cannot run on a compromised device.
-
-        Please use a device with the original iOS
-        security environment.
-        """
-
-        messageLabel.font =
-            UIFont.systemFont(ofSize: 16)
-
-        messageLabel.textAlignment =
-            .center
-
-        messageLabel.numberOfLines =
-            0
-
-        messageLabel.textColor =
-            .secondaryLabel
-
-        let stack =
-            UIStackView(
-                arrangedSubviews: [
-                    titleLabel,
-                    messageLabel
-                ]
-            )
-
-        stack.axis =
-            .vertical
-
-        stack.spacing =
-            20
-
-        stack.alignment =
-            .fill
-
-        stack.translatesAutoresizingMaskIntoConstraints =
-            false
-
-        viewController.view.addSubview(
-            stack
-        )
-
-        NSLayoutConstraint.activate([
-
-            stack.leadingAnchor.constraint(
-                equalTo:
-                    viewController.view.leadingAnchor,
-                constant: 30
-            ),
-
-            stack.trailingAnchor.constraint(
-                equalTo:
-                    viewController.view.trailingAnchor,
-                constant: -30
-            ),
-
-            stack.centerYAnchor.constraint(
-                equalTo:
-                    viewController.view.centerYAnchor
-            )
-        ])
+            SecurityBlockedViewController()
 
         window.rootViewController =
             viewController
@@ -176,19 +114,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         window.makeKeyAndVisible()
     }
 
-    // =========================================
-    // PRIVACY PROTECTION
-    // =========================================
+    // MARK: - Privacy screen
 
     func applicationWillResignActive(
         _ application: UIApplication
     ) {
+
         showPrivacyView()
     }
 
     func applicationDidBecomeActive(
         _ application: UIApplication
     ) {
+
         hidePrivacyView()
     }
 
@@ -213,11 +151,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             .flexibleHeight
         ]
 
-        let label =
-            UILabel()
+        let label = UILabel()
 
         label.text =
-            "TestApp"
+            "BMTPC"
 
         label.font =
             UIFont.boldSystemFont(
@@ -238,26 +175,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         NSLayoutConstraint.activate([
 
             label.centerXAnchor.constraint(
-                equalTo:
-                    overlay.centerXAnchor
+                equalTo: overlay.centerXAnchor
             ),
 
             label.centerYAnchor.constraint(
-                equalTo:
-                    overlay.centerYAnchor
+                equalTo: overlay.centerYAnchor
             )
         ])
 
-        window.addSubview(
-            overlay
-        )
+        window.addSubview(overlay)
 
         window.bringSubviewToFront(
             overlay
         )
 
-        privacyView =
-            overlay
+        privacyView = overlay
     }
 
     private func hidePrivacyView() {
@@ -267,6 +199,189 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         privacyView = nil
     }
 }
+
+// MARK: - Security blocked screen
+
+final class SecurityBlockedViewController:
+    UIViewController {
+
+    override func viewDidLoad() {
+
+        super.viewDidLoad()
+
+        view.backgroundColor =
+            .systemBackground
+
+        setupUI()
+    }
+
+    private func setupUI() {
+
+        let container =
+            UIView()
+
+        container.translatesAutoresizingMaskIntoConstraints =
+            false
+
+        view.addSubview(container)
+
+        let icon = UIImageView()
+
+        if #available(iOS 13.0, *) {
+
+            icon.image =
+                UIImage(
+                    systemName:
+                        "exclamationmark.shield.fill"
+                )
+        }
+
+        icon.tintColor =
+            .systemRed
+
+        icon.contentMode =
+            .scaleAspectFit
+
+        icon.translatesAutoresizingMaskIntoConstraints =
+            false
+
+        container.addSubview(icon)
+
+        let titleLabel =
+            UILabel()
+
+        titleLabel.text =
+            "Security Warning"
+
+        titleLabel.font =
+            UIFont.boldSystemFont(
+                ofSize: 26
+            )
+
+        titleLabel.textColor =
+            .label
+
+        titleLabel.textAlignment =
+            .center
+
+        titleLabel.numberOfLines =
+            0
+
+        titleLabel.translatesAutoresizingMaskIntoConstraints =
+            false
+
+        container.addSubview(titleLabel)
+
+        let messageLabel =
+            UILabel()
+
+        messageLabel.text =
+            """
+            This application cannot run on a compromised device.
+
+            Please use an iOS device with the original security environment.
+            """
+
+        messageLabel.font =
+            UIFont.systemFont(
+                ofSize: 17
+            )
+
+        messageLabel.textColor =
+            .secondaryLabel
+
+        messageLabel.textAlignment =
+            .center
+
+        messageLabel.numberOfLines =
+            0
+
+        messageLabel.translatesAutoresizingMaskIntoConstraints =
+            false
+
+        container.addSubview(messageLabel)
+
+        NSLayoutConstraint.activate([
+
+            container.centerXAnchor.constraint(
+                equalTo: view.centerXAnchor
+            ),
+
+            container.centerYAnchor.constraint(
+                equalTo: view.centerYAnchor
+            ),
+
+            container.leadingAnchor.constraint(
+                greaterThanOrEqualTo:
+                    view.leadingAnchor,
+                constant: 30
+            ),
+
+            container.trailingAnchor.constraint(
+                lessThanOrEqualTo:
+                    view.trailingAnchor,
+                constant: -30
+            ),
+
+            icon.widthAnchor.constraint(
+                equalToConstant: 70
+            ),
+
+            icon.heightAnchor.constraint(
+                equalToConstant: 70
+            ),
+
+            icon.centerXAnchor.constraint(
+                equalTo: container.centerXAnchor
+            ),
+
+            icon.topAnchor.constraint(
+                equalTo: container.topAnchor
+            ),
+
+            titleLabel.topAnchor.constraint(
+                equalTo: icon.bottomAnchor,
+                constant: 24
+            ),
+
+            titleLabel.leadingAnchor.constraint(
+                equalTo: container.leadingAnchor
+            ),
+
+            titleLabel.trailingAnchor.constraint(
+                equalTo: container.trailingAnchor
+            ),
+
+            messageLabel.topAnchor.constraint(
+                equalTo: titleLabel.bottomAnchor,
+                constant: 16
+            ),
+
+            messageLabel.leadingAnchor.constraint(
+                equalTo: container.leadingAnchor
+            ),
+
+            messageLabel.trailingAnchor.constraint(
+                equalTo: container.trailingAnchor
+            ),
+
+            messageLabel.bottomAnchor.constraint(
+                equalTo: container.bottomAnchor
+            )
+        ])
+    }
+
+    /*
+     Prevent the user from dismissing or navigating away
+     from the security screen.
+    */
+
+    override var shouldAutorotate: Bool {
+        return false
+    }
+}
+
+// MARK: - React Native delegate
 
 class ReactNativeDelegate:
     RCTDefaultReactNativeFactoryDelegate {
@@ -282,8 +397,7 @@ class ReactNativeDelegate:
 
         #if DEBUG
 
-        return RCTBundleURLProvider
-            .sharedSettings()
+        return RCTBundleURLProvider.sharedSettings()
             .jsBundleURL(
                 forBundleRoot: "index"
             )

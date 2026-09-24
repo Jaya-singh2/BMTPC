@@ -38,7 +38,7 @@
 	<array>
   	  	<string>cydia</string>
     	<string>sileo</string>
-    	<string>zebra</string>
+    	<string>zbra</string>
 	</array>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>This app needs your location to show hazard zones near you.</string>

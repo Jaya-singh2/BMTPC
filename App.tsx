@@ -1,4 +1,7 @@
-import React, {useEffect, useState} from 'react';
+import React, {
+  useEffect,
+  useState,
+} from 'react';
 
 import {
   StatusBar,
@@ -10,198 +13,247 @@ import {
   Platform,
 } from 'react-native';
 
-import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {
+  SafeAreaProvider,
+} from 'react-native-safe-area-context';
 
 import AppNavigator from './Navigation/AppNavigator';
 
-import {checkRootedDevice} from './utils/rootDetection';
-import {checkJailbrokenDevice} from './utils/jailbreakDetection';
+import {
+  checkRootedDevice,
+} from './utils/rootDetection';
+
+import {
+  checkJailbrokenDevice,
+} from './utils/jailbreakDetection';
 
 function App() {
-  const isDarkMode = useColorScheme() === 'dark';
 
-  // =========================================
-  // Android Root Detection State
-  // =========================================
+  const isDarkMode =
+    useColorScheme() === 'dark';
 
-  const [isCheckingRoot, setIsCheckingRoot] = useState(
+  const [
+    isCheckingRoot,
+    setIsCheckingRoot,
+  ] = useState(
     Platform.OS === 'android',
   );
 
-  const [isRooted, setIsRooted] = useState(false);
+  const [
+    isRooted,
+    setIsRooted,
+  ] = useState(false);
 
-  // =========================================
-  // iOS Jailbreak Detection State
-  // =========================================
-
-  const [isCheckingJailbreak, setIsCheckingJailbreak] = useState(
+  const [
+    isCheckingJailbreak,
+    setIsCheckingJailbreak,
+  ] = useState(
     Platform.OS === 'ios',
   );
 
-  const [isJailbroken, setIsJailbroken] = useState(false);
-
-  // =========================================
-  // Device Security Check
-  // =========================================
+  const [
+    isJailbroken,
+    setIsJailbroken,
+  ] = useState(false);
 
   useEffect(() => {
-    const checkDeviceSecurity = async () => {
-      // -----------------------------------------
-      // Android Root Detection
-      // -----------------------------------------
 
-      if (Platform.OS === 'android') {
-        try {
-          const rooted = await checkRootedDevice();
+    const checkDeviceSecurity =
+      async () => {
 
-          setIsRooted(rooted);
-        } catch (error) {
-          console.warn('Root detection failed:', error);
+        // ==================================================
+        // ANDROID
+        // ==================================================
 
-          /*
-           * Keep the existing Android behavior.
-           *
-           * NOTE:
-           * The native RootBeer check is the actual
-           * security detection mechanism.
-           */
-          setIsRooted(false);
-        } finally {
-          setIsCheckingRoot(false);
+        if (Platform.OS === 'android') {
+
+          try {
+
+            const rooted =
+              await checkRootedDevice();
+
+            setIsRooted(rooted);
+
+          } catch (error) {
+
+            console.warn(
+              'Root detection failed:',
+              error,
+            );
+
+            setIsRooted(false);
+
+          } finally {
+
+            setIsCheckingRoot(false);
+          }
+
+          return;
         }
 
-        return;
-      }
+        // ==================================================
+        // IOS
+        // ==================================================
 
-      // -----------------------------------------
-      // iOS Jailbreak Detection
-      // -----------------------------------------
+        if (Platform.OS === 'ios') {
 
-      if (Platform.OS === 'ios') {
-        try {
-          const jailbroken =
-            await checkJailbrokenDevice();
+          try {
 
-          setIsJailbroken(jailbroken);
-        } catch (error) {
-          console.warn(
-            'Jailbreak detection failed:',
-            error,
-          );
+            const jailbroken =
+              await checkJailbrokenDevice();
 
-          setIsJailbroken(false);
-        } finally {
-          setIsCheckingJailbreak(false);
+            setIsJailbroken(
+              jailbroken,
+            );
+
+          } catch (error) {
+
+            console.warn(
+              'Jailbreak detection failed:',
+              error,
+            );
+
+            setIsJailbroken(false);
+
+          } finally {
+
+            setIsCheckingJailbreak(
+              false,
+            );
+          }
+
+          return;
         }
 
-        return;
-      }
+        setIsCheckingRoot(false);
 
-      // -----------------------------------------
-      // Other Platforms
-      // -----------------------------------------
-
-      setIsCheckingRoot(false);
-      setIsCheckingJailbreak(false);
-    };
+        setIsCheckingJailbreak(false);
+      };
 
     checkDeviceSecurity();
+
   }, []);
 
-  // =========================================
-  // Android - Checking Root Status
-  // =========================================
+  // ========================================================
+  // ANDROID CHECKING
+  // ========================================================
 
   if (
     Platform.OS === 'android' &&
     isCheckingRoot
   ) {
+
     return (
       <SafeAreaProvider>
-        <StatusBar barStyle="dark-content" />
+
+        <StatusBar
+          barStyle="dark-content"
+        />
 
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" />
+
+          <ActivityIndicator
+            size="large"
+          />
 
           <Text style={styles.text}>
             Checking device security...
           </Text>
+
         </View>
+
       </SafeAreaProvider>
     );
   }
 
-  // =========================================
-  // Android - Rooted Device
-  // =========================================
+  // ========================================================
+  // ANDROID BLOCK
+  // ========================================================
 
   if (
     Platform.OS === 'android' &&
     isRooted
   ) {
+
     return (
       <SafeAreaProvider>
-        <StatusBar barStyle="dark-content" />
+
+        <StatusBar
+          barStyle="dark-content"
+        />
 
         <View style={styles.centerContainer}>
+
           <Text style={styles.title}>
             Security Warning
           </Text>
 
           <Text style={styles.message}>
-            This application cannot run on a rooted
-            device.
+            This application cannot run on a
+            rooted device.
           </Text>
 
           <Text style={styles.message}>
             Please use a device with the original
             Android security settings.
           </Text>
+
         </View>
+
       </SafeAreaProvider>
     );
   }
 
-  // =========================================
-  // iOS - Checking Jailbreak Status
-  // =========================================
+  // ========================================================
+  // IOS CHECKING
+  // ========================================================
 
   if (
     Platform.OS === 'ios' &&
     isCheckingJailbreak
   ) {
+
     return (
       <SafeAreaProvider>
+
         <StatusBar
           barStyle="dark-content"
         />
 
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" />
+
+          <ActivityIndicator
+            size="large"
+          />
 
           <Text style={styles.text}>
             Checking device security...
           </Text>
+
         </View>
+
       </SafeAreaProvider>
     );
   }
 
-  // =========================================
-  // iOS - Jailbroken Device
-  // =========================================
+  // ========================================================
+  // IOS SECONDARY BLOCK
+  // ========================================================
 
   if (
     Platform.OS === 'ios' &&
     isJailbroken
   ) {
+
     return (
       <SafeAreaProvider>
+
         <StatusBar
           barStyle="dark-content"
         />
 
         <View style={styles.centerContainer}>
+
           <Text style={styles.title}>
             Security Warning
           </Text>
@@ -212,20 +264,23 @@ function App() {
           </Text>
 
           <Text style={styles.message}>
-            Please use a device with the original
-            iOS security environment.
+            Please use an iOS device with the
+            original security environment.
           </Text>
+
         </View>
+
       </SafeAreaProvider>
     );
   }
 
-  // =========================================
-  // Normal Application
-  // =========================================
+  // ========================================================
+  // NORMAL APPLICATION
+  // ========================================================
 
   return (
     <SafeAreaProvider>
+
       <StatusBar
         barStyle={
           isDarkMode
@@ -235,15 +290,13 @@ function App() {
       />
 
       <AppNavigator />
+
     </SafeAreaProvider>
   );
 }
 
-// =========================================
-// Styles
-// =========================================
-
 const styles = StyleSheet.create({
+
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
