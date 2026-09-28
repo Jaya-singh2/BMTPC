@@ -1,7 +1,4 @@
-import React, {
-  useEffect,
-  useState,
-} from 'react';
+import React, { useState } from 'react';
 
 import {
   StatusBar,
@@ -10,7 +7,6 @@ import {
   View,
   ActivityIndicator,
   useColorScheme,
-  Platform,
 } from 'react-native';
 
 import {
@@ -20,138 +16,82 @@ import {
 import AppNavigator from './Navigation/AppNavigator';
 
 import {
-  checkRootedDevice,
-} from './utils/rootDetection';
-
-import {
-  checkJailbrokenDevice,
-} from './utils/jailbreakDetection';
+  useFreeRasp,
+} from 'freerasp-react-native';
 
 function App() {
-
   const isDarkMode =
     useColorScheme() === 'dark';
 
   const [
-    isCheckingRoot,
-    setIsCheckingRoot,
-  ] = useState(
-    Platform.OS === 'android',
-  );
-
-  const [
-    isRooted,
-    setIsRooted,
-  ] = useState(false);
-
-  const [
-    isCheckingJailbreak,
-    setIsCheckingJailbreak,
-  ] = useState(
-    Platform.OS === 'ios',
-  );
+    isCheckingSecurity,
+    setIsCheckingSecurity,
+  ] = useState(true);
 
   const [
     isJailbroken,
     setIsJailbroken,
   ] = useState(false);
 
-  useEffect(() => {
+  // ========================================================
+  // TALSEC CONFIGURATION
+  // ========================================================
+  const talsecConfig = {
+    iosConfig: {
+      appBundleId: 'com.bmtpc.iosapp',
 
-    const checkDeviceSecurity =
-      async () => {
+      // Replace with your Apple Developer Team ID
+      appTeamId: 'EJC8C58G3F',
+    },
 
-        // ==================================================
-        // ANDROID
-        // ==================================================
+    // Use true for production/audit build
+    isProd: true,
 
-        if (Platform.OS === 'android') {
+    // Protect against bypass attempts
+    killOnBypass: true,
 
-          try {
-
-            const rooted =
-              await checkRootedDevice();
-
-            setIsRooted(rooted);
-
-          } catch (error) {
-
-            console.warn(
-              'Root detection failed:',
-              error,
-            );
-
-            setIsRooted(false);
-
-          } finally {
-
-            setIsCheckingRoot(false);
-          }
-
-          return;
-        }
-
-        // ==================================================
-        // IOS
-        // ==================================================
-
-        if (Platform.OS === 'ios') {
-
-          try {
-
-            const jailbroken =
-              await checkJailbrokenDevice();
-
-            setIsJailbroken(
-              jailbroken,
-            );
-
-          } catch (error) {
-
-            console.warn(
-              'Jailbreak detection failed:',
-              error,
-            );
-
-            setIsJailbroken(false);
-
-          } finally {
-
-            setIsCheckingJailbreak(
-              false,
-            );
-          }
-
-          return;
-        }
-
-        setIsCheckingRoot(false);
-
-        setIsCheckingJailbreak(false);
-      };
-
-    checkDeviceSecurity();
-
-  }, []);
+    // Replace with your email
+    watcherMail: 'bmtpceq@gmail.com',
+  };
 
   // ========================================================
-  // ANDROID CHECKING
+  // TALSEC SECURITY ACTIONS
   // ========================================================
+  const talsecActions = {
+    privilegedAccess: () => {
+      console.warn(
+        'Talsec: Jailbreak detected',
+      );
 
-  if (
-    Platform.OS === 'android' &&
-    isCheckingRoot
-  ) {
+      setIsJailbroken(true);
+      setIsCheckingSecurity(false);
+    },
+  };
 
+  // ========================================================
+  // START TALSEC
+  // ========================================================
+  useFreeRasp(
+    talsecConfig,
+    talsecActions,
+    {
+      allChecksFinished: () => {
+        setIsCheckingSecurity(false);
+      },
+    },
+  );
+
+  // ========================================================
+  // SECURITY CHECKING
+  // ========================================================
+  if (isCheckingSecurity) {
     return (
       <SafeAreaProvider>
-
         <StatusBar
           barStyle="dark-content"
         />
 
         <View style={styles.centerContainer}>
-
           <ActivityIndicator
             size="large"
           />
@@ -159,101 +99,22 @@ function App() {
           <Text style={styles.text}>
             Checking device security...
           </Text>
-
         </View>
-
       </SafeAreaProvider>
     );
   }
 
   // ========================================================
-  // ANDROID BLOCK
+  // JAILBREAK BLOCK
   // ========================================================
-
-  if (
-    Platform.OS === 'android' &&
-    isRooted
-  ) {
-
+  if (isJailbroken) {
     return (
       <SafeAreaProvider>
-
         <StatusBar
           barStyle="dark-content"
         />
 
         <View style={styles.centerContainer}>
-
-          <Text style={styles.title}>
-            Security Warning
-          </Text>
-
-          <Text style={styles.message}>
-            This application cannot run on a
-            rooted device.
-          </Text>
-
-          <Text style={styles.message}>
-            Please use a device with the original
-            Android security settings.
-          </Text>
-
-        </View>
-
-      </SafeAreaProvider>
-    );
-  }
-
-  // ========================================================
-  // IOS CHECKING
-  // ========================================================
-
-  if (
-    Platform.OS === 'ios' &&
-    isCheckingJailbreak
-  ) {
-
-    return (
-      <SafeAreaProvider>
-
-        <StatusBar
-          barStyle="dark-content"
-        />
-
-        <View style={styles.centerContainer}>
-
-          <ActivityIndicator
-            size="large"
-          />
-
-          <Text style={styles.text}>
-            Checking device security...
-          </Text>
-
-        </View>
-
-      </SafeAreaProvider>
-    );
-  }
-
-  // ========================================================
-  // IOS SECONDARY BLOCK
-  // ========================================================
-
-  if (
-    Platform.OS === 'ios' &&
-    isJailbroken
-  ) {
-
-    return (
-      <SafeAreaProvider>
-
-        <StatusBar
-          barStyle="dark-content"
-        />
-
-        <View style={styles.centerContainer}>
-
           <Text style={styles.title}>
             Security Warning
           </Text>
@@ -267,9 +128,7 @@ function App() {
             Please use an iOS device with the
             original security environment.
           </Text>
-
         </View>
-
       </SafeAreaProvider>
     );
   }
@@ -277,10 +136,8 @@ function App() {
   // ========================================================
   // NORMAL APPLICATION
   // ========================================================
-
   return (
     <SafeAreaProvider>
-
       <StatusBar
         barStyle={
           isDarkMode
@@ -290,13 +147,11 @@ function App() {
       />
 
       <AppNavigator />
-
     </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
