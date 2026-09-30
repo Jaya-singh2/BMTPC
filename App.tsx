@@ -36,31 +36,64 @@ function App() {
   // ========================================================
   // TALSEC CONFIGURATION
   // ========================================================
+
   const talsecConfig = {
     iosConfig: {
       appBundleId: 'com.bmtpc.iosapp',
-
-      // Replace with your Apple Developer Team ID
       appTeamId: 'EJC8C58G3F',
     },
 
-    // Use true for production/audit build
+    // IMPORTANT:
+    // true for release/audit build
     isProd: true,
-
-    // Protect against bypass attempts
     killOnBypass: true,
-
-    // Replace with your email
     watcherMail: 'bmtpceq@gmail.com',
   };
 
   // ========================================================
   // TALSEC SECURITY ACTIONS
   // ========================================================
+
   const talsecActions = {
     privilegedAccess: () => {
       console.warn(
         'Talsec: Jailbreak detected',
+      );
+
+      setIsJailbroken(true);
+      setIsCheckingSecurity(false);
+    },
+
+    hooks: () => {
+      console.warn(
+        'Talsec: Hook detected',
+      );
+
+      setIsJailbroken(true);
+      setIsCheckingSecurity(false);
+    },
+
+    appIntegrity: () => {
+      console.warn(
+        'Talsec: App integrity violation',
+      );
+
+      setIsJailbroken(true);
+      setIsCheckingSecurity(false);
+    },
+
+    debug: () => {
+      console.warn(
+        'Talsec: Debugging detected',
+      );
+
+      setIsJailbroken(true);
+      setIsCheckingSecurity(false);
+    },
+
+    obfuscationIssues: () => {
+      console.warn(
+        'Talsec: Obfuscation issue',
       );
 
       setIsJailbroken(true);
@@ -71,11 +104,16 @@ function App() {
   // ========================================================
   // START TALSEC
   // ========================================================
+
   useFreeRasp(
     talsecConfig,
     talsecActions,
     {
       allChecksFinished: () => {
+        console.log(
+          'Talsec: All security checks finished',
+        );
+
         setIsCheckingSecurity(false);
       },
     },
@@ -84,6 +122,7 @@ function App() {
   // ========================================================
   // SECURITY CHECKING
   // ========================================================
+
   if (isCheckingSecurity) {
     return (
       <SafeAreaProvider>
@@ -105,8 +144,9 @@ function App() {
   }
 
   // ========================================================
-  // JAILBREAK BLOCK
+  // SECURITY BLOCK
   // ========================================================
+
   if (isJailbroken) {
     return (
       <SafeAreaProvider>
@@ -136,6 +176,7 @@ function App() {
   // ========================================================
   // NORMAL APPLICATION
   // ========================================================
+
   return (
     <SafeAreaProvider>
       <StatusBar
